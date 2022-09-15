@@ -3,11 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Ramsey\Uuid\Uuid;
+use Throwable;
 
 class CategoryController extends Controller
 {
+    const DEFAULT_IMAGE_CATEGORY = 'category-foods.png';
+
     public function index()
     {
         return view('categories/index');
@@ -26,11 +31,27 @@ class CategoryController extends Controller
     {
         $validation = \Validator::make($request->all(), [
             'category_name' => 'required|string|min:3|max:50',
-            'category_image' => 'required|image|mimes:jpeg,png,jpg|max:100'
+            'category_image' => 'image|mimes:jpeg,png,jpg|max:100'
         ]);
         if ($validation->fails()) {
             return response()->json(['status' => 'failed', 'errors' => $validation->errors()], 400);
         }
-        return response()->json(['data' => $request->all()]);
+        try {
+            $newCategory = new Category;
+            $newCategory->id = Uuid::uuid4()->getHex();
+            $newCategory->name = $request->category_name;
+            $newCategory->slug = \Str::slug($request->category_name, '-');
+            if ($request->file('category_image')) {
+                $imageName = time() . $newCategory->slug . '.' . $request->file('category_image')->getClientOriginalExtension();
+                $request->file('category_image')->move(public_path('/images/categories'), $imageName);
+                $newCategory->image = $imageName;
+            } else {
+                $newCategory->image = self::DEFAULT_IMAGE_CATEGORY;
+            }
+            $newCategory->save();
+            return response()->json(['status' => 'created', 'message' => 'New category added'], 201);
+        } catch (Throwable $e) {
+            return response()->json(['status' => 'failed', 'message' => 'Could not save input request'], 500);
+        }
     }
 }

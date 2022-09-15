@@ -122,7 +122,7 @@
     const toastBody = document.querySelector(".toast-body");
 
     function generateMessage(status, message) {
-        if (status === 'success') {
+        if (status === 'success' || status === 'created') {
             toastAlert.classList.toggle("bg-danger");
             toastAlert.classList.toggle("bg-success");
             toastBody.textContent = message;
@@ -154,52 +154,42 @@
     });
     addCategoryForm.addEventListener("submit", function(e) {
         e.preventDefault();
-        const payloadCategory = new FormData(addCategoryForm);
-        fetch("{{ url('admin/categories/save') }}", {
-                method: "POST",
-                headers: {
-                    accept: 'application/json'
-                },
-                credentials: "same-origin",
-                body: payloadCategory
-            })
-            .then(response => response.json())
-            .then(res => {
-                if (res.status === 'failed') {
-                    if (res.errors) {
-                        Object.keys(res.errors).forEach((key, index) => {
-                            const elemInput = document.getElementById(key);
-                            const elemFeedBack = document.getElementById(key + "_feedback");
+        if (category_name_value == '' || category_name_value == null) {
+            category_name.classList.add('is-invalid');
+            category_name_feedback.textContent = "Name can't be empty";
 
-                            if (elemInput && elemFeedBack) {
-                                elemInput.classList.add('is-invalid');
-                                elemFeedBack.textContent = res.errors[key][0];
-                            }
-                        });
+        } else {
+            const payloadCategory = new FormData(addCategoryForm);
+            fetch("{{ url('admin/categories/save') }}", {
+                    method: "POST",
+                    headers: {
+                        accept: 'application/json'
+                    },
+                    credentials: "same-origin",
+                    body: payloadCategory
+                })
+                .then(response => response.json())
+                .then(res => {
+                    if (res.status === 'failed') {
+                        if (res.errors) {
+                            Object.keys(res.errors).forEach((key, index) => {
+                                const elemInput = document.getElementById(key);
+                                const elemFeedBack = document.getElementById(key + "_feedback");
+
+                                if (elemInput && elemFeedBack) {
+                                    elemInput.classList.add('is-invalid');
+                                    elemFeedBack.textContent = res.errors[key][0];
+                                }
+                            });
+                            return;
+                        }
+                        generateMessage(res.status, res.message);
+                    } else if (res.status === 'created') {
+                        generateMessage(res.status, res.message);
                     }
-                }
-            })
-            .catch(err => console.error)
-        // if (category_name_value == '') {
-        //     category_name.classList.add('is-invalid');
-        //     category_name_feedback.textContent = "Name can't be empty";
-
-        // } else {
-        //     const payloadCategory = new FormData(addCategoryForm);
-        //     fetch("{{ url('admin/categories/save') }}", {
-        //             method: "POST",
-        //             headers: {
-        //                 accept: 'application/json'
-        //             },
-        //             credentials: "same-origin",
-        //             body: payloadCategory
-        //         })
-        //         .then(response => response.json())
-        //         .then(res => {
-        //             console.log(res);
-        //         })
-        //         .catch(err => console.error)
-        // }
+                })
+                .catch(err => console.error)
+        }
     });
 
     function validateImage(image) {
@@ -216,6 +206,7 @@
             return;
         }
     }
+
 
     fetch("{{ url('admin/categories/get') }}")
         .then(response => {
@@ -264,7 +255,7 @@
                     select: 3,
                     sortable: false,
                     render: function(data) {
-                        return `<img src="{{ asset('images') }}/${data}" class="img-fluid mx-auto d-block" alt="food-categories" width="100">`
+                        return `<img src="{{ asset('images/categories') }}/${data}" class="img-fluid mx-auto d-block" alt="food-categories" width="100">`
                     }
                 },
                 {
@@ -274,7 +265,7 @@
                         return `
                             <button type="button" class="btn btn-warning btn-sm edit">Edit</button>
                             <button type="button" class="btn btn-danger btn-sm delete">Delete</button>
-                            `
+                            `;
                     }
                 },
                 {

@@ -32,7 +32,7 @@ class DatabaseSeeder extends Seeder
         $category->id = $idCategory;
         $category->name = 'Aneka Nasi';
         $category->slug = \Str::slug('Aneka Nasi', '-');
-        $category->image = 'categories/category-foods.png';
+        $category->image = 'category-foods.png';
         $category->save();
         // Food Seed
         $foodJson = '[
@@ -53,7 +53,7 @@ class DatabaseSeeder extends Seeder
             $food->id = Uuid::uuid4()->getHex();
             $food->name = $f['name'];
             $food->price = $f['price'];
-            $food->image = 'foods/food-placeholder.jpeg';
+            $food->image = 'food-placeholder.jpeg';
             $food->status_stock = $f['stock'];
             $food->save();
             $food->categories()->attach($idCategory);
