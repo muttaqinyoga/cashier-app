@@ -11,7 +11,7 @@
         <div class="card-body text-white">
             <div class="row">
                 <div class="col-md-3">
-                    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#addCategory">
+                    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
                         Add New Category
                     </button>
                 </div>
@@ -54,7 +54,7 @@
 </div>
 <!-- Form Categories -->
 <!-- Add -->
-<div class="modal fade text-left" id="addCategory" tabindex="-1" aria-labelledby="addCategory" role="dialog">
+<div class="modal fade text-left" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModal" role="dialog">
     <div class="modal-dialog modal-dialog-top modal-dialog-scrollable" role="document">
         <div class="modal-content">
             <div class="modal-header bg-success">
@@ -83,18 +83,44 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="bx bx-x d-block d-sm-none"></i>
-                        <span class="d-none d-sm-block">Cancel</span>
+                        Cancel
                     </button>
-                    <button type="submit" class="btn btn-success ml-1">
-                        <i class="bx bx-check d-block d-sm-none"></i>
-                        <span class="d-none d-sm-block">Save</span>
+                    <button type="submit" class="btn btn-success ml-1" id="btnSubmitCategory">
+                        Save
                     </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+<!-- Delete Category Modal -->
+<div class="modal fade text-left" id="deleteCategoryModal" tabindex="-1" aria-labelledby="deleteCategoryModal" role="dialog">
+    <div class="modal-dialog modal-dialog-top modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger">
+                <h4 class="modal-title text-light">Delete Food Category</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+
+                </button>
+            </div>
+            <form method="post" id="deleteCategoryForm">
+                @csrf
+                <div class="modal-body">
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-danger ml-1" id="btnDeleteCategory">
+                        Yes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Delete Category Modal -->
 <div class="toast-container position-fixed p-3 top-0 start-50 translate-middle-x">
     <div id="toastAlert" class="toast border-0" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="d-flex">
@@ -116,25 +142,29 @@
     };
     let FoodDataTables = null;
     let category_name_value = null;
+    let totalRecord = 0;
     loadingDiv.classList.toggle('d-none');
     const toastAlert = document.getElementById('toastAlert');
     const toast = new bootstrap.Toast(toastAlert);
     const toastBody = document.querySelector(".toast-body");
+    const addCategoryModal = new bootstrap.Modal('#addCategoryModal');
+    const btnSubmitCategory = document.querySelector('#btnSubmitCategory');
+    const textDeleteCategory = document.querySelector("#deleteCategoryForm > .modal-body");
 
     function generateMessage(status, message) {
         if (status === 'success' || status === 'created') {
-            toastAlert.classList.toggle("bg-danger");
-            toastAlert.classList.toggle("bg-success");
+            toastAlert.classList.remove("bg-danger");
+            toastAlert.classList.add("bg-success");
             toastBody.textContent = message;
         } else {
-            toastAlert.classList.toggle("bg-success");
-            toastAlert.classList.toggle("bg-danger");
+            toastAlert.classList.remove("bg-success");
+            toastAlert.classList.add("bg-danger");
             toastBody.textContent = message;
         }
         toast.show();
     }
-    // add Category
     const addCategoryForm = document.querySelector("#addCategoryForm");
+    const deleteCategoryForm = document.querySelector('#deleteCategoryForm');
     const category_name = document.getElementsByName('category_name')[0];
     const category_image = document.getElementsByName('category_image')[0];
     const category_image_feedback = document.querySelector("#category_image_feedback");
@@ -152,6 +182,9 @@
             category_name_feedback.textContent = "Name can't be empty";
         }
     });
+
+
+    // Save categories
     addCategoryForm.addEventListener("submit", function(e) {
         e.preventDefault();
         if (category_name_value == '' || category_name_value == null) {
@@ -160,6 +193,9 @@
 
         } else {
             const payloadCategory = new FormData(addCategoryForm);
+            btnSubmitCategory.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...`;
+            btnSubmitCategory.setAttribute('disabled', 'disabled');
+
             fetch("{{ url('admin/categories/save') }}", {
                     method: "POST",
                     headers: {
@@ -175,7 +211,6 @@
                             Object.keys(res.errors).forEach((key, index) => {
                                 const elemInput = document.getElementById(key);
                                 const elemFeedBack = document.getElementById(key + "_feedback");
-
                                 if (elemInput && elemFeedBack) {
                                     elemInput.classList.add('is-invalid');
                                     elemFeedBack.textContent = res.errors[key][0];
@@ -183,14 +218,40 @@
                             });
                             return;
                         }
+                        addCategoryModal.hide();
+                        resetModal();
                         generateMessage(res.status, res.message);
                     } else if (res.status === 'created') {
+                        resetModal();
+                        addCategoryModal.hide();
+                        const currLength = Foods.data.length;
+                        Foods.data.push([]);
+                        Foods.data[currLength].push(res.data.id);
+                        Foods.data[currLength].push(res.data.slug);
+                        Foods.data[currLength].push(res.data.name);
+                        Foods.data[currLength].push(res.data.image);
+                        Foods.data[currLength].push(res.data.action);
+                        FoodDataTables.destroy();
+                        initFoodTable();
                         generateMessage(res.status, res.message);
                     }
                 })
                 .catch(err => console.error)
         }
     });
+
+    // Delete Categories
+    let idCategory = null;
+    deleteCategoryForm.addEventListener("submit", function(e) {
+        e.preventDefault();
+        console.log(idCategory);
+    });
+
+    function resetModal() {
+        addCategoryForm.reset();
+        btnSubmitCategory.innerHTML = `Save`;
+        btnSubmitCategory.removeAttribute('disabled');
+    }
 
     function validateImage(image) {
         if (!['image/jpg', 'image/jpeg', 'image/png'].includes(image.type)) {
@@ -249,7 +310,7 @@
 
     function initFoodTable() {
         const foodTables = document.querySelector('#foodTables');
-        foodDataTables = new simpleDatatables.DataTable(foodTables, {
+        FoodDataTables = new simpleDatatables.DataTable(foodTables, {
             data: Foods,
             columns: [{
                     select: 3,
@@ -261,10 +322,10 @@
                 {
                     select: 4,
                     sortable: false,
-                    render: function(data) {
+                    render: function(data, cell, row) {
                         return `
                             <button type="button" class="btn btn-warning btn-sm edit">Edit</button>
-                            <button type="button" class="btn btn-danger btn-sm delete">Delete</button>
+                            <button type="button" class="btn btn-danger btn-sm delete-${row.dataIndex}" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal" data-row=${row.dataIndex} >Delete</button>
                             `;
                     }
                 },
@@ -278,16 +339,38 @@
                     sortable: false,
                     hidden: true
                 }
-            ]
+            ],
+            perPage: 4,
+            perPageSelect: [4, 10, 20, 50]
         });
-        let deleteBtn = document.querySelectorAll('.delete');
-        deleteBtn.forEach((el, i) => {
-            el.addEventListener("click", function(e) {
-                Foods.data.splice(i, 1);
-                foodDataTables.destroy();
-                initFoodTable();
-            });
-        });
+        totalRecord = FoodDataTables.data.length;
+        for (let i = 0; i < totalRecord; i++) {
+            let deleteBtn = document.querySelector(`.delete-${i}`);
+            console.log(deleteBtn)
+            // deleteBtn.addEventListener("click", function(e) {
+            //     // Foods.data.splice(i, 1);
+            //     // FoodDataTables.destroy();
+            //     // initFoodTable();
+            //     const data = FoodDataTables.data;
+            //     console.log(data);
+            //     console.log("oke")
+            //     // textDeleteCategory.innerHTML = `<p> Do you want to delete <strong>${row[2]}</strong> from Food Category List ? </p>`;
+            //     // idCategory = row[0];
+            // });
+        }
+
+        // deleteBtn.forEach((el, i) => {
+        //     el.addEventListener("click", function(e) {
+        //         // Foods.data.splice(i, 1);
+        //         // FoodDataTables.destroy();
+        //         // initFoodTable();
+        //         const data = FoodDataTables.data;
+        //         console.log(data);
+        //         console.log("oke")
+        //         // textDeleteCategory.innerHTML = `<p> Do you want to delete <strong>${row[2]}</strong> from Food Category List ? </p>`;
+        //         // idCategory = row[0];
+        //     });
+        // });
         let thead = document.querySelector("#foodTables > thead");
         thead.classList.add("table-dark");
     }

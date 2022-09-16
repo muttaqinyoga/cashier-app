@@ -49,7 +49,12 @@ class CategoryController extends Controller
                 $newCategory->image = self::DEFAULT_IMAGE_CATEGORY;
             }
             $newCategory->save();
-            return response()->json(['status' => 'created', 'message' => 'New category added'], 201);
+            $payload = [
+                'id' => $newCategory->id,
+                'name' => $newCategory->name,
+                'image' => $newCategory->image
+            ];
+            return response()->json(['status' => 'created', 'message' => 'New category added', 'data' => $payload], 201);
         } catch (Throwable $e) {
             return response()->json(['status' => 'failed', 'message' => 'Could not save input request'], 500);
         }
