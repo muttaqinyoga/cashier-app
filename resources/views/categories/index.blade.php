@@ -105,6 +105,8 @@
             </div>
             <form method="post" id="deleteCategoryForm">
                 @csrf
+                @method('DELETE')
+                <input type="hidden" name="category_delete_id" id="category_delete_id">
                 <div class="modal-body">
 
                 </div>
@@ -142,7 +144,7 @@
     };
     let FoodDataTables = null;
     let category_name_value = null;
-    let totalRecord = 0;
+    let deleted_index_category = null;
     loadingDiv.classList.toggle('d-none');
     const toastAlert = document.getElementById('toastAlert');
     const toast = new bootstrap.Toast(toastAlert);
@@ -150,6 +152,8 @@
     const addCategoryModal = new bootstrap.Modal('#addCategoryModal');
     const btnSubmitCategory = document.querySelector('#btnSubmitCategory');
     const textDeleteCategory = document.querySelector("#deleteCategoryForm > .modal-body");
+    const deleteCategoryModal = new bootstrap.Modal('#deleteCategoryModal');
+    const btnDeleteCategory = document.querySelector('#btnDeleteCategory');
 
     function generateMessage(status, message) {
         if (status === 'success' || status === 'created') {
@@ -167,6 +171,7 @@
     const deleteCategoryForm = document.querySelector('#deleteCategoryForm');
     const category_name = document.getElementsByName('category_name')[0];
     const category_image = document.getElementsByName('category_image')[0];
+    const category_delete_id = document.getElementsByName('category_delete_id')[0];
     const category_image_feedback = document.querySelector("#category_image_feedback");
     const category_name_feedback = document.querySelector("#category_name_feedback");
     category_image.addEventListener('change', () => {
@@ -241,16 +246,95 @@
     });
 
     // Delete Categories
-    let idCategory = null;
     deleteCategoryForm.addEventListener("submit", function(e) {
         e.preventDefault();
-        console.log(idCategory);
+        if (category_delete_id.value == '' || category_delete_id.value == null) {
+            window.location.href = window.location.href;
+        } else {
+            if (deleted_index_category == 0) {
+                fetchDelete();
+            } else if (deleted_index_category == null || deleted_index_category == '') {
+                resetModal();
+                deleteCategoryModal.hide();
+                window.location.href = window.location.href;
+            } else {
+                fetchDelete();
+            }
+
+        }
     });
+
+    function fetchDelete() {
+        const payloadDeleteCategory = {
+            _token: document.getElementsByName("_token")[0].getAttribute("value"),
+            _method: document.getElementsByName("_method")[0].getAttribute("value"),
+            category_delete_id: document.getElementsByName("category_delete_id")[0].getAttribute("value")
+        }
+        btnDeleteCategory.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...`;
+        btnDeleteCategory.setAttribute('disabled', 'disabled');
+
+        fetch("{{ url('admin/categories/delete') }}", {
+                method: "DELETE",
+                headers: {
+                    accept: 'application/json',
+                    'Content-type': 'application/json; charset=UTF-8',
+                    'X-CSRF-TOKEN': document.getElementsByName("csrf-token")[0].getAttribute("content")
+                },
+                credentials: "same-origin",
+                body: JSON.stringify(payloadDeleteCategory)
+            })
+            .then(response => response.json())
+            .then(res => {
+                if (res.status === 'failed') {
+
+                    deleteCategoryModal.hide();
+                    resetModal();
+                    generateMessage(res.status, res.message);
+                } else if (res.status === 'success') {
+                    resetModal();
+                    deleteCategoryModal.hide();
+                    Foods.data.splice(deleted_index_category, 1);
+                    FoodDataTables.destroy();
+                    initFoodTable();
+                    generateMessage(res.status, res.message);
+                }
+            })
+            .catch(err => console.error)
+    }
+
+    function showConfirm(dataIndex) {
+        let deleteBtn = document.querySelectorAll('.delete');
+        let valid = false;
+        deleteBtn.forEach((el, i) => {
+            if (el.getAttribute("data-index") == dataIndex) {
+                const foodCategoryName = FoodDataTables.activeRows[dataIndex].firstElementChild.textContent;
+                textDeleteCategory.innerHTML = `<p> Do you want to delete <strong>${foodCategoryName}</strong> from Food Category List ? </p>`;
+                const category_id = FoodDataTables.data[dataIndex].firstElementChild.textContent;
+                category_delete_id.value = category_id;
+                valid = true;
+                deleted_index_category = dataIndex;
+            }
+            // Foods.data.splice(i, 1);
+            // FoodDataTables.destroy();
+            // initFoodTable();
+            // const data = FoodDataTables.data;
+            // console.log(data);
+            // textDeleteCategory.innerHTML = `<p> Do you want to delete <strong>${row[2]}</strong> from Food Category List ? </p>`;
+            // idCategory = row[0];
+        });
+        if (!valid) {
+            window.location.href = window.location.href;
+        }
+
+    }
 
     function resetModal() {
         addCategoryForm.reset();
+        deleteCategoryForm.reset();
         btnSubmitCategory.innerHTML = `Save`;
         btnSubmitCategory.removeAttribute('disabled');
+        btnDeleteCategory.innerHTML = `Yes`;
+        btnDeleteCategory.removeAttribute('disabled');
     }
 
     function validateImage(image) {
@@ -325,7 +409,7 @@
                     render: function(data, cell, row) {
                         return `
                             <button type="button" class="btn btn-warning btn-sm edit">Edit</button>
-                            <button type="button" class="btn btn-danger btn-sm delete-${row.dataIndex}" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal" data-row=${row.dataIndex} >Delete</button>
+                            <button type="button" class="btn btn-danger btn-sm delete" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal" data-index="${row.dataIndex}" onclick="showConfirm(${row.dataIndex})" >Delete</button>
                             `;
                     }
                 },
@@ -343,35 +427,7 @@
             perPage: 4,
             perPageSelect: [4, 10, 20, 50]
         });
-        totalRecord = FoodDataTables.data.length;
-        for (let i = 0; i < totalRecord; i++) {
-            let deleteBtn = document.querySelector(`.delete-${i}`);
-            console.log(deleteBtn)
-            // deleteBtn.addEventListener("click", function(e) {
-            //     // Foods.data.splice(i, 1);
-            //     // FoodDataTables.destroy();
-            //     // initFoodTable();
-            //     const data = FoodDataTables.data;
-            //     console.log(data);
-            //     console.log("oke")
-            //     // textDeleteCategory.innerHTML = `<p> Do you want to delete <strong>${row[2]}</strong> from Food Category List ? </p>`;
-            //     // idCategory = row[0];
-            // });
-        }
-
-        // deleteBtn.forEach((el, i) => {
-        //     el.addEventListener("click", function(e) {
-        //         // Foods.data.splice(i, 1);
-        //         // FoodDataTables.destroy();
-        //         // initFoodTable();
-        //         const data = FoodDataTables.data;
-        //         console.log(data);
-        //         console.log("oke")
-        //         // textDeleteCategory.innerHTML = `<p> Do you want to delete <strong>${row[2]}</strong> from Food Category List ? </p>`;
-        //         // idCategory = row[0];
-        //     });
-        // });
-        let thead = document.querySelector("#foodTables > thead");
+        const thead = document.querySelector("#foodTables > thead");
         thead.classList.add("table-dark");
     }
 </script>

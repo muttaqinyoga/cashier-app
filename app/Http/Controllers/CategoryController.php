@@ -59,4 +59,16 @@ class CategoryController extends Controller
             return response()->json(['status' => 'failed', 'message' => 'Could not save input request'], 500);
         }
     }
+
+    public function delete(Request $request)
+    {
+        try {
+            $category = Category::findOrFail($request->category_delete_id);
+            $category->delete();
+
+            return response()->json(['status' => 'success', 'message' => "$category->name has been deleted"]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['status' => 'failed', 'message' => 'Could not delete requested data'], 400);
+        }
+    }
 }
