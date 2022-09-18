@@ -28,6 +28,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/admin/categories', [CategoryController::class, 'index']);
     Route::get('/admin/categories/get', [CategoryController::class, 'getListCategory']);
     Route::post('/admin/categories/save', [CategoryController::class, 'save']);
+    Route::post('/admin/categories/update', [CategoryController::class, 'update']);
     Route::delete('/admin/categories/delete', [CategoryController::class, 'delete']);
     Route::get('/admin/foods', [FoodController::class, 'index']);
 });

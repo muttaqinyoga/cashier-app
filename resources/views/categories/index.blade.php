@@ -123,6 +123,52 @@
     </div>
 </div>
 <!-- End Delete Category Modal -->
+<!-- Edit Categories -->
+<div class="modal fade text-left" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModal" role="dialog">
+    <div class="modal-dialog modal-dialog-top modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h4 class="modal-title text-light">Edit Food Category</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+
+                </button>
+            </div>
+            <form method="post" id="editCategoryForm">
+                @csrf
+                <input type="hidden" name="category_edit_id" id="category_edit_id">
+                <div class="modal-body">
+                    <label>Name</label>
+                    <div class="form-group">
+                        <input type="text" placeholder="Enter category food name..." class="form-control" name="category_edit_name" id="category_edit_name">
+                        <div class="invalid-feedback" id="category_edit_name_feedback">
+
+                        </div>
+                    </div>
+                    <label>Image</label>
+                    <div class="form-group mb-2">
+                        <img src="" class="img-fluid d-block" alt="food-categories" width="100" id="currentImage">
+                    </div>
+                    <div class="form-group">
+                        <input class="form-control" type="file" name="category_edit_image" id="category_edit_image">
+                        <div class="invalid-feedback" id="category_edit_image_feedback">
+
+                        </div>
+                    </div>
+                    <small class="text-info">* Let it blank if image would not change</small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-warning ml-1" id="btnEditSubmitCategory">
+                        Update
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End edit categories -->
 <div class="toast-container position-fixed p-3 top-0 start-50 translate-middle-x">
     <div id="toastAlert" class="toast border-0" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="d-flex">
@@ -144,13 +190,17 @@
     };
     let FoodDataTables = null;
     let category_name_value = null;
+    let category_edit_name_value = null;
     let deleted_index_category = null;
+    let updated_index_category = null;
     loadingDiv.classList.toggle('d-none');
     const toastAlert = document.getElementById('toastAlert');
     const toast = new bootstrap.Toast(toastAlert);
     const toastBody = document.querySelector(".toast-body");
     const addCategoryModal = new bootstrap.Modal('#addCategoryModal');
+    const editCategoryModal = new bootstrap.Modal('#editCategoryModal');
     const btnSubmitCategory = document.querySelector('#btnSubmitCategory');
+    const btnEditSubmitCategory = document.querySelector('#btnEditSubmitCategory');
     const textDeleteCategory = document.querySelector("#deleteCategoryForm > .modal-body");
     const deleteCategoryModal = new bootstrap.Modal('#deleteCategoryModal');
     const btnDeleteCategory = document.querySelector('#btnDeleteCategory');
@@ -169,14 +219,24 @@
     }
     const addCategoryForm = document.querySelector("#addCategoryForm");
     const deleteCategoryForm = document.querySelector('#deleteCategoryForm');
+    const editCategoryForm = document.querySelector('#editCategoryForm');
     const category_name = document.getElementsByName('category_name')[0];
+    const category_edit_name = document.getElementsByName('category_edit_name')[0];
     const category_image = document.getElementsByName('category_image')[0];
+    const category_edit_image = document.getElementsByName('category_edit_image')[0];
     const category_delete_id = document.getElementsByName('category_delete_id')[0];
+    const category_edit_id = document.getElementsByName('category_edit_id')[0];
     const category_image_feedback = document.querySelector("#category_image_feedback");
+    const category_edit_image_feedback = document.querySelector("#category_edit_image_feedback");
     const category_name_feedback = document.querySelector("#category_name_feedback");
+    const category_edit_name_feedback = document.querySelector("#category_edit_name_feedback");
     category_image.addEventListener('change', () => {
         category_image.classList.remove('is-invalid');
-        validateImage(category_image.files[0]);
+        validateImage(category_image.files[0], 'add');
+    });
+    category_edit_image.addEventListener('change', () => {
+        category_edit_image.classList.remove('is-invalid');
+        validateImage(category_edit_image.files[0], 'edit');
     });
     category_name.addEventListener("input", () => {
         category_name_value = category_name.value.trim();
@@ -185,6 +245,15 @@
             category_name.value = '';
             category_name.classList.add('is-invalid');
             category_name_feedback.textContent = "Name can't be empty";
+        }
+    });
+    category_edit_name.addEventListener("input", () => {
+        category_edit_name_value = category_edit_name.value.trim();
+        category_edit_name.classList.remove('is-invalid');
+        if (category_edit_name_value == '') {
+            category_edit_name.value = '';
+            category_edit_name.classList.add('is-invalid');
+            category_edit_name_feedback.textContent = "Name can't be empty";
         }
     });
 
@@ -245,6 +314,64 @@
         }
     });
 
+    // Update categories
+    editCategoryForm.addEventListener("submit", function(e) {
+        e.preventDefault();
+        if (category_edit_name_value == '' || category_edit_name_value == null) {
+            category_edit_name.classList.add('is-invalid');
+            category_edit_name_feedback.textContent = "Name can't be empty";
+
+        } else {
+            const payloadCategory = new FormData(editCategoryForm);
+
+            btnEditSubmitCategory.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...`;
+            btnEditSubmitCategory.setAttribute('disabled', 'disabled');
+
+            fetch("{{ url('admin/categories/update') }}", {
+                    method: "POST",
+                    headers: {
+                        accept: 'application/json'
+                    },
+                    credentials: "same-origin",
+                    body: payloadCategory
+                })
+                .then(response => response.json())
+                .then(res => {
+                    if (res.status === 'failed') {
+                        if (res.errors) {
+                            Object.keys(res.errors).forEach((key, index) => {
+                                const elemInput = document.getElementById(key);
+                                const elemFeedBack = document.getElementById(key + "_feedback");
+                                if (elemInput && elemFeedBack) {
+                                    elemInput.classList.add('is-invalid');
+                                    elemFeedBack.textContent = res.errors[key][0];
+                                    btnEditSubmitCategory.innerHTML = 'Update';
+                                    btnEditSubmitCategory.removeAttribute('disabled');
+                                }
+                            });
+                            return;
+                        }
+                        editCategoryModal.hide();
+                        resetModal();
+                        generateMessage(res.status, res.message);
+                    } else if (res.status === 'success') {
+                        editCategoryModal.hide();
+                        Foods.data[updated_index_category][0] = res.data.id;
+                        Foods.data[updated_index_category][1] = res.data.slug;
+                        Foods.data[updated_index_category][2] = res.data.name;
+                        Foods.data[updated_index_category][3] = res.data.image;
+                        Foods.data[updated_index_category][4] = res.data.action;
+                        FoodDataTables.destroy();
+                        initFoodTable();
+                        resetModal();
+                        generateMessage(res.status, res.message);
+
+                    }
+                })
+                .catch(err => console.error)
+        }
+    })
+
     // Delete Categories
     deleteCategoryForm.addEventListener("submit", function(e) {
         e.preventDefault();
@@ -263,6 +390,7 @@
 
         }
     });
+
 
     function fetchDelete() {
         const payloadDeleteCategory = {
@@ -291,11 +419,12 @@
                     resetModal();
                     generateMessage(res.status, res.message);
                 } else if (res.status === 'success') {
-                    resetModal();
+
                     deleteCategoryModal.hide();
                     Foods.data.splice(deleted_index_category, 1);
                     FoodDataTables.destroy();
                     initFoodTable();
+                    resetModal();
                     generateMessage(res.status, res.message);
                 }
             })
@@ -314,42 +443,77 @@
                 valid = true;
                 deleted_index_category = dataIndex;
             }
-            // Foods.data.splice(i, 1);
-            // FoodDataTables.destroy();
-            // initFoodTable();
-            // const data = FoodDataTables.data;
-            // console.log(data);
-            // textDeleteCategory.innerHTML = `<p> Do you want to delete <strong>${row[2]}</strong> from Food Category List ? </p>`;
-            // idCategory = row[0];
         });
         if (!valid) {
             window.location.href = window.location.href;
         }
+    }
 
+    function showEdit(dataIndex) {
+        category_edit_name.classList.remove('is-invalid');
+        category_edit_image.classList.remove('is-invalid');
+        let editBtn = document.querySelectorAll('.edit');
+        let valid = false;
+        editBtn.forEach((el, i) => {
+            if (el.getAttribute("data-index") == dataIndex) {
+                category_edit_name.value = el.getAttribute("data-name");
+                category_edit_name_value = category_edit_name.value;
+                document.querySelector('#currentImage').setAttribute("src", el.getAttribute("data-image"));
+                category_edit_id.value = el.getAttribute("data-id");
+                valid = true;
+                updated_index_category = dataIndex;
+            }
+        });
+        if (!valid) {
+            window.location.href = window.location.href;
+        }
     }
 
     function resetModal() {
         addCategoryForm.reset();
         deleteCategoryForm.reset();
-        btnSubmitCategory.innerHTML = `Save`;
+        editCategoryForm.reset();
+        btnSubmitCategory.innerHTML = 'Save';
         btnSubmitCategory.removeAttribute('disabled');
-        btnDeleteCategory.innerHTML = `Yes`;
+        btnEditSubmitCategory.innerHTML = 'Update';
+        btnEditSubmitCategory.removeAttribute('disabled');
+        btnDeleteCategory.innerHTML = 'Yes';
         btnDeleteCategory.removeAttribute('disabled');
+        category_name_value = null;
+        category_edit_name_value = null;
+        deleted_index_category = null;
+        updated_index_category = null;
     }
 
-    function validateImage(image) {
-        if (!['image/jpg', 'image/jpeg', 'image/png'].includes(image.type)) {
-            category_image.classList.add('is-invalid');
-            category_image_feedback.textContent = "Only.jpg, jpeg and.png image are allowed";
-            category_image.value = '';
-            return;
+    function validateImage(image, act) {
+        if (act == 'add') {
+            if (!['image/jpg', 'image/jpeg', 'image/png'].includes(image.type)) {
+                category_image.classList.add('is-invalid');
+                category_image_feedback.textContent = "Only.jpg, jpeg and.png image are allowed";
+                category_image.value = '';
+                return;
+            }
+            if (image.size > 100000) {
+                category_image.classList.add('is-invalid');
+                category_image_feedback.textContent = "Image size must be less than 100KB";
+                category_image.value = '';
+                return;
+            }
+        } else {
+            if (!['image/jpg', 'image/jpeg', 'image/png'].includes(image.type)) {
+                category_edit_image.classList.add('is-invalid');
+                category_edit_image_feedback.textContent = "Only.jpg, jpeg and.png image are allowed";
+                category_edit_image.value = '';
+                return;
+            }
+            if (image.size > 100000) {
+                category_edit_image.classList.add('is-invalid');
+                category_edit_image_feedback.textContent = "Image size must be less than 100KB";
+                category_edit_image.value = '';
+                return;
+            }
         }
-        if (image.size > 100000) {
-            category_image.classList.add('is-invalid');
-            category_image_feedback.textContent = "Image size must be less than 100KB";
-            category_image.value = '';
-            return;
-        }
+
     }
 
 
@@ -378,19 +542,6 @@
             throw new Error(res.message);
         })
         .catch(console.error);
-    // const addFoodBtn = document.querySelector("#addFoodBtn");
-    // addFoodBtn.addEventListener("click", function() {
-    //     let newData = ["Indomie Goreng", "10000.00", "Tersedia", null];
-    //     const currLength = Foods.data.length;
-
-    //     Foods.data.push([]);
-    //     Foods.data[currLength].push("Indomie Goreng");
-    //     Foods.data[currLength].push("10000.00");
-    //     Foods.data[currLength].push("Tersedia");
-    //     Foods.data[currLength].push('');
-    //     foodDataTables.destroy();
-    //     initFoodTable();
-    // });
 
     function initFoodTable() {
         const foodTables = document.querySelector('#foodTables');
@@ -408,7 +559,7 @@
                     sortable: false,
                     render: function(data, cell, row) {
                         return `
-                            <button type="button" class="btn btn-warning btn-sm edit">Edit</button>
+                            <button type="button" class="btn btn-warning btn-sm edit" data-id="${row.childNodes[0].textContent}" data-name="${row.childNodes[2].textContent}" data-image="${row.childNodes[3].childNodes[0].src}" data-bs-toggle="modal" data-bs-target="#editCategoryModal" data-index="${row.dataIndex}" onclick="showEdit(${row.dataIndex})" >Edit</button>
                             <button type="button" class="btn btn-danger btn-sm delete" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal" data-index="${row.dataIndex}" onclick="showConfirm(${row.dataIndex})" >Delete</button>
                             `;
                     }
