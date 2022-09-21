@@ -183,29 +183,13 @@
 @section('custom-script')
 <script src="{{ asset('simple-datatables/simple-datatables.js') }}"></script>
 <script>
-    const loadingDiv = document.querySelector("#loadingDiv");
-    let Foods = {
-        headings: ["Id", "Slug", "Name", "Image", "Action"],
-        data: []
-    };
-    let FoodDataTables = null;
-    let category_name_value = null;
-    let category_edit_name_value = null;
-    let deleted_index_category = null;
-    let updated_index_category = null;
-    loadingDiv.classList.toggle('d-none');
-    const toastAlert = document.getElementById('toastAlert');
-    const toast = new bootstrap.Toast(toastAlert);
-    const toastBody = document.querySelector(".toast-body");
-    const addCategoryModal = new bootstrap.Modal('#addCategoryModal');
-    const editCategoryModal = new bootstrap.Modal('#editCategoryModal');
-    const btnSubmitCategory = document.querySelector('#btnSubmitCategory');
-    const btnEditSubmitCategory = document.querySelector('#btnEditSubmitCategory');
-    const textDeleteCategory = document.querySelector("#deleteCategoryForm > .modal-body");
-    const deleteCategoryModal = new bootstrap.Modal('#deleteCategoryModal');
-    const btnDeleteCategory = document.querySelector('#btnDeleteCategory');
-
+    const navCategories = document.querySelector('.categories');
+    navCategories.classList.add('active');
+    // Generate toast for message alert
     function generateMessage(status, message) {
+        const toastAlert = document.getElementById('toastAlert');
+        const toast = new bootstrap.Toast(toastAlert);
+        const toastBody = document.querySelector(".toast-body");
         if (status === 'success' || status === 'created') {
             toastAlert.classList.remove("bg-danger");
             toastAlert.classList.add("bg-success");
@@ -217,27 +201,128 @@
         }
         toast.show();
     }
+    // END
+    // Loading Spinner for load data 
+    const loadingDiv = document.querySelector("#loadingDiv");
+    loadingDiv.classList.toggle('d-none');
+    // END
+    // Initialize Datatable
+    let Foods = {
+        headings: ["Id", "Slug", "Name", "Image", "Action"],
+        data: []
+    };
+    let FoodDataTables = null;
+
+    function initFoodTable() {
+        const foodTables = document.querySelector('#foodTables');
+        FoodDataTables = new simpleDatatables.DataTable(foodTables, {
+            data: Foods,
+            columns: [{
+                    select: 3,
+                    sortable: false,
+                    render: function(data) {
+                        return `<img src="{{ asset('images/categories') }}/${data}" class="img-fluid mx-auto d-block" alt="food-categories" width="100">`
+                    }
+                },
+                {
+                    select: 4,
+                    sortable: false,
+                    render: function(data, cell, row) {
+                        return `
+                            <button type="button" class="btn btn-warning btn-sm edit" data-id="${row.childNodes[0].textContent}" data-name="${row.childNodes[2].textContent}" data-image="${row.childNodes[3].childNodes[0].src}" data-bs-toggle="modal" data-bs-target="#editCategoryModal" data-index="${row.dataIndex}" onclick="showEdit(${row.dataIndex})" >Edit</button>
+                            <button type="button" class="btn btn-danger btn-sm delete" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal" data-index="${row.dataIndex}" onclick="showDeleteConfirm(${row.dataIndex})" >Delete</button>
+                            `;
+                    }
+                },
+                {
+                    select: 0,
+                    sortable: false,
+                    hidden: true
+                },
+                {
+                    select: 1,
+                    sortable: false,
+                    hidden: true
+                }
+            ],
+            perPage: 4,
+            perPageSelect: [4, 10, 20, 50]
+        });
+        const thead = document.querySelector("#foodTables > thead");
+        thead.classList.add("table-dark");
+    }
+    // END
+    // Validate Image
+    function validateImage(image, act) {
+        if (act == 'add') {
+            if (!['image/jpg', 'image/jpeg', 'image/png'].includes(image.type)) {
+                category_image.classList.add('is-invalid');
+                category_image_feedback.textContent = "Only.jpg, jpeg and.png image are allowed";
+                category_image.value = '';
+                return;
+            }
+            if (image.size > 100000) {
+                category_image.classList.add('is-invalid');
+                category_image_feedback.textContent = "Image size must be less than 100KB";
+                category_image.value = '';
+                return;
+            }
+        } else {
+            if (!['image/jpg', 'image/jpeg', 'image/png'].includes(image.type)) {
+                category_edit_image.classList.add('is-invalid');
+                category_edit_image_feedback.textContent = "Only.jpg, jpeg and.png image are allowed";
+                category_edit_image.value = '';
+                return;
+            }
+            if (image.size > 100000) {
+                category_edit_image.classList.add('is-invalid');
+                category_edit_image_feedback.textContent = "Image size must be less than 100KB";
+                category_edit_image.value = '';
+                return;
+            }
+        }
+
+    }
+    // END
+    /* ------- Get Categories ------- */
+    fetch("{{ url('admin/categories/get') }}")
+        .then(response => {
+            return response.json();
+        })
+        .then(res => {
+            if (res.status === 'success') {
+                loadingDiv.classList.toggle('d-none');
+                for (let i = 0; i < res.data.length; i++) {
+                    Foods.data[i] = [];
+                    Foods.data[i].push(res.data[i]['id'])
+                    Foods.data[i].push(res.data[i]['slug'])
+                    Foods.data[i].push(res.data[i]['name'])
+                    Foods.data[i].push(res.data[i]['image'])
+                    Foods.data[i].push(res.data[i]['created_at'])
+                }
+                initFoodTable();
+                return;
+            }
+            loadingDiv.classList.toggle('d-none');
+            initFoodTable();
+            generateMessage(res.status, res.message);
+            throw new Error(res.message);
+        })
+        .catch(console.error);
+    /* ------- End Get Categories ------- */
+
+    /* ------- Save Categories ------- */
+    // Initialize Var and DOM
+    let category_name_value = null;
+    const addCategoryModal = new bootstrap.Modal('#addCategoryModal');
+    const btnSubmitCategory = document.querySelector('#btnSubmitCategory');
     const addCategoryForm = document.querySelector("#addCategoryForm");
-    const deleteCategoryForm = document.querySelector('#deleteCategoryForm');
-    const editCategoryForm = document.querySelector('#editCategoryForm');
     const category_name = document.getElementsByName('category_name')[0];
-    const category_edit_name = document.getElementsByName('category_edit_name')[0];
     const category_image = document.getElementsByName('category_image')[0];
-    const category_edit_image = document.getElementsByName('category_edit_image')[0];
-    const category_delete_id = document.getElementsByName('category_delete_id')[0];
-    const category_edit_id = document.getElementsByName('category_edit_id')[0];
-    const category_image_feedback = document.querySelector("#category_image_feedback");
-    const category_edit_image_feedback = document.querySelector("#category_edit_image_feedback");
     const category_name_feedback = document.querySelector("#category_name_feedback");
-    const category_edit_name_feedback = document.querySelector("#category_edit_name_feedback");
-    category_image.addEventListener('change', () => {
-        category_image.classList.remove('is-invalid');
-        validateImage(category_image.files[0], 'add');
-    });
-    category_edit_image.addEventListener('change', () => {
-        category_edit_image.classList.remove('is-invalid');
-        validateImage(category_edit_image.files[0], 'edit');
-    });
+    const category_image_feedback = document.querySelector("#category_image_feedback");
+    // END
+    // Validate form
     category_name.addEventListener("input", () => {
         category_name_value = category_name.value.trim();
         category_name.classList.remove('is-invalid');
@@ -247,18 +332,12 @@
             category_name_feedback.textContent = "Name can't be empty";
         }
     });
-    category_edit_name.addEventListener("input", () => {
-        category_edit_name_value = category_edit_name.value.trim();
-        category_edit_name.classList.remove('is-invalid');
-        if (category_edit_name_value == '') {
-            category_edit_name.value = '';
-            category_edit_name.classList.add('is-invalid');
-            category_edit_name_feedback.textContent = "Name can't be empty";
-        }
+    category_image.addEventListener('change', () => {
+        category_image.classList.remove('is-invalid');
+        validateImage(category_image.files[0], 'add');
     });
-
-
-    // Save categories
+    // End
+    // Submit form
     addCategoryForm.addEventListener("submit", function(e) {
         e.preventDefault();
         if (category_name_value == '' || category_name_value == null) {
@@ -288,15 +367,17 @@
                                 if (elemInput && elemFeedBack) {
                                     elemInput.classList.add('is-invalid');
                                     elemFeedBack.textContent = res.errors[key][0];
+                                    btnSubmitCategory.innerHTML = 'Save';
+                                    btnSubmitCategory.removeAttribute('disabled');
                                 }
                             });
                             return;
                         }
                         addCategoryModal.hide();
-                        resetModal();
+                        resetAction();
                         generateMessage(res.status, res.message);
                     } else if (res.status === 'created') {
-                        resetModal();
+                        resetAction();
                         addCategoryModal.hide();
                         const currLength = Foods.data.length;
                         Foods.data.push([]);
@@ -304,17 +385,68 @@
                         Foods.data[currLength].push(res.data.slug);
                         Foods.data[currLength].push(res.data.name);
                         Foods.data[currLength].push(res.data.image);
-                        Foods.data[currLength].push(res.data.action);
+                        Foods.data[currLength].push(res.data.created_at);
+                        Foods.data.sort((a, b) => {
+                            return new Date(b[4]).getTime() - new Date(a[4]).getTime();
+                        });
                         FoodDataTables.destroy();
                         initFoodTable();
                         generateMessage(res.status, res.message);
                     }
                 })
-                .catch(err => console.error)
+                .catch(err => console.error);
         }
     });
+    // END
+    /* ------- End Save Categories ------- */
 
-    // Update categories
+    /* ------- Update Categories ------- */
+    // Initialize var and DOM
+    let category_edit_name_value = null;
+    let updated_index_category = null;
+    const editCategoryModal = new bootstrap.Modal('#editCategoryModal');
+    const btnEditSubmitCategory = document.querySelector('#btnEditSubmitCategory');
+    const editCategoryForm = document.querySelector('#editCategoryForm');
+    const category_edit_id = document.getElementsByName('category_edit_id')[0];
+    const category_edit_name = document.getElementsByName('category_edit_name')[0];
+    const category_edit_image = document.getElementsByName('category_edit_image')[0];
+    const category_edit_image_feedback = document.querySelector("#category_edit_image_feedback");
+    const category_edit_name_feedback = document.querySelector("#category_edit_name_feedback");
+    // End
+    function showEdit(dataIndex) {
+        let editBtn = document.querySelectorAll('.edit');
+        let valid = false;
+        editBtn.forEach((el, i) => {
+            if (el.getAttribute("data-index") == dataIndex) {
+                category_edit_name.value = el.getAttribute("data-name");
+                category_edit_name_value = category_edit_name.value;
+                document.querySelector('#currentImage').setAttribute("src", el.getAttribute("data-image"));
+                category_edit_id.value = el.getAttribute("data-id");
+                valid = true;
+                updated_index_category = dataIndex;
+            }
+        });
+        if (!valid) {
+            window.location.href = window.location.href;
+        }
+    }
+    // Validate form
+    category_edit_image.addEventListener('change', () => {
+        category_edit_image.classList.remove('is-invalid');
+        validateImage(category_edit_image.files[0], 'edit');
+    });
+
+    category_edit_name.addEventListener("input", () => {
+        category_edit_name_value = category_edit_name.value.trim();
+        category_edit_name.classList.remove('is-invalid');
+        if (category_edit_name_value == '') {
+            category_edit_name.value = '';
+            category_edit_name.classList.add('is-invalid');
+            category_edit_name_feedback.textContent = "Name can't be empty";
+        }
+    });
+    // End
+    // Submit form
     editCategoryForm.addEventListener("submit", function(e) {
         e.preventDefault();
         if (category_edit_name_value == '' || category_edit_name_value == null) {
@@ -352,7 +484,7 @@
                             return;
                         }
                         editCategoryModal.hide();
-                        resetModal();
+                        resetAction();
                         generateMessage(res.status, res.message);
                     } else if (res.status === 'success') {
                         editCategoryModal.hide();
@@ -360,19 +492,48 @@
                         Foods.data[updated_index_category][1] = res.data.slug;
                         Foods.data[updated_index_category][2] = res.data.name;
                         Foods.data[updated_index_category][3] = res.data.image;
-                        Foods.data[updated_index_category][4] = res.data.action;
+                        Foods.data[updated_index_category][4] = res.data.updated_at;
+                        Foods.data.sort((a, b) => {
+                            return new Date(b[4]).getTime() - new Date(a[4]).getTime();
+                        });
                         FoodDataTables.destroy();
                         initFoodTable();
-                        resetModal();
+                        resetAction();
                         generateMessage(res.status, res.message);
 
                     }
                 })
-                .catch(err => console.error)
+                .catch(err => console.error);
         }
-    })
-
-    // Delete Categories
+    });
+    /* ------- End Update Categories ------- */
+    /* ------- Delete Categories ------- */
+    // Init var dan DOM
+    let deleted_index_category = null;
+    const textDeleteCategory = document.querySelector("#deleteCategoryForm > .modal-body");
+    const deleteCategoryModal = new bootstrap.Modal('#deleteCategoryModal');
+    const btnDeleteCategory = document.querySelector('#btnDeleteCategory');
+    const deleteCategoryForm = document.querySelector('#deleteCategoryForm');
+    const category_delete_id = document.getElementsByName('category_delete_id')[0];
+    // END
+    function showDeleteConfirm(dataIndex) {
+        let deleteBtn = document.querySelectorAll('.delete');
+        let valid = false;
+        deleteBtn.forEach((el, i) => {
+            if (el.getAttribute("data-index") == dataIndex) {
+                const foodCategoryName = FoodDataTables.activeRows[dataIndex].firstElementChild.textContent;
+                textDeleteCategory.innerHTML = `<p> Do you want to delete <strong>${foodCategoryName}</strong> from Food Category List ? </p>`;
+                const category_id = FoodDataTables.data[dataIndex].firstElementChild.textContent;
+                category_delete_id.value = category_id;
+                valid = true;
+                deleted_index_category = dataIndex;
+            }
+        });
+        if (!valid) {
+            window.location.href = window.location.href;
+        }
+    }
+    // Submit form
     deleteCategoryForm.addEventListener("submit", function(e) {
         e.preventDefault();
         if (category_delete_id.value == '' || category_delete_id.value == null) {
@@ -381,7 +542,7 @@
             if (deleted_index_category == 0) {
                 fetchDelete();
             } else if (deleted_index_category == null || deleted_index_category == '') {
-                resetModal();
+                resetAction();
                 deleteCategoryModal.hide();
                 window.location.href = window.location.href;
             } else {
@@ -390,7 +551,6 @@
 
         }
     });
-
 
     function fetchDelete() {
         const payloadDeleteCategory = {
@@ -416,7 +576,7 @@
                 if (res.status === 'failed') {
 
                     deleteCategoryModal.hide();
-                    resetModal();
+                    resetAction();
                     generateMessage(res.status, res.message);
                 } else if (res.status === 'success') {
 
@@ -424,52 +584,15 @@
                     Foods.data.splice(deleted_index_category, 1);
                     FoodDataTables.destroy();
                     initFoodTable();
-                    resetModal();
+                    resetAction();
                     generateMessage(res.status, res.message);
                 }
             })
-            .catch(err => console.error)
+            .catch(err => console.error);
     }
+    /* ------- End Delete Categories ------- */
 
-    function showConfirm(dataIndex) {
-        let deleteBtn = document.querySelectorAll('.delete');
-        let valid = false;
-        deleteBtn.forEach((el, i) => {
-            if (el.getAttribute("data-index") == dataIndex) {
-                const foodCategoryName = FoodDataTables.activeRows[dataIndex].firstElementChild.textContent;
-                textDeleteCategory.innerHTML = `<p> Do you want to delete <strong>${foodCategoryName}</strong> from Food Category List ? </p>`;
-                const category_id = FoodDataTables.data[dataIndex].firstElementChild.textContent;
-                category_delete_id.value = category_id;
-                valid = true;
-                deleted_index_category = dataIndex;
-            }
-        });
-        if (!valid) {
-            window.location.href = window.location.href;
-        }
-    }
-
-    function showEdit(dataIndex) {
-        category_edit_name.classList.remove('is-invalid');
-        category_edit_image.classList.remove('is-invalid');
-        let editBtn = document.querySelectorAll('.edit');
-        let valid = false;
-        editBtn.forEach((el, i) => {
-            if (el.getAttribute("data-index") == dataIndex) {
-                category_edit_name.value = el.getAttribute("data-name");
-                category_edit_name_value = category_edit_name.value;
-                document.querySelector('#currentImage').setAttribute("src", el.getAttribute("data-image"));
-                category_edit_id.value = el.getAttribute("data-id");
-                valid = true;
-                updated_index_category = dataIndex;
-            }
-        });
-        if (!valid) {
-            window.location.href = window.location.href;
-        }
-    }
-
-    function resetModal() {
+    function resetAction() {
         addCategoryForm.reset();
         deleteCategoryForm.reset();
         editCategoryForm.reset();
@@ -479,107 +602,14 @@
         btnEditSubmitCategory.removeAttribute('disabled');
         btnDeleteCategory.innerHTML = 'Yes';
         btnDeleteCategory.removeAttribute('disabled');
+        category_edit_name.classList.remove('is-invalid');
+        category_edit_image.classList.remove('is-invalid');
+        category_name.classList.remove('is-invalid');
+        category_image.classList.remove('is-invalid');
         category_name_value = null;
         category_edit_name_value = null;
         deleted_index_category = null;
         updated_index_category = null;
-    }
-
-    function validateImage(image, act) {
-        if (act == 'add') {
-            if (!['image/jpg', 'image/jpeg', 'image/png'].includes(image.type)) {
-                category_image.classList.add('is-invalid');
-                category_image_feedback.textContent = "Only.jpg, jpeg and.png image are allowed";
-                category_image.value = '';
-                return;
-            }
-            if (image.size > 100000) {
-                category_image.classList.add('is-invalid');
-                category_image_feedback.textContent = "Image size must be less than 100KB";
-                category_image.value = '';
-                return;
-            }
-        } else {
-            if (!['image/jpg', 'image/jpeg', 'image/png'].includes(image.type)) {
-                category_edit_image.classList.add('is-invalid');
-                category_edit_image_feedback.textContent = "Only.jpg, jpeg and.png image are allowed";
-                category_edit_image.value = '';
-                return;
-            }
-            if (image.size > 100000) {
-                category_edit_image.classList.add('is-invalid');
-                category_edit_image_feedback.textContent = "Image size must be less than 100KB";
-                category_edit_image.value = '';
-                return;
-            }
-        }
-
-    }
-
-
-    fetch("{{ url('admin/categories/get') }}")
-        .then(response => {
-            return response.json();
-        })
-        .then(res => {
-            if (res.status === 'success') {
-                loadingDiv.classList.toggle('d-none');
-                for (let i = 0; i < res.data.length; i++) {
-                    // data[i]['action'] = null;
-                    Foods.data[i] = [];
-                    Foods.data[i].push(res.data[i]['id'])
-                    Foods.data[i].push(res.data[i]['slug'])
-                    Foods.data[i].push(res.data[i]['name'])
-                    Foods.data[i].push(res.data[i]['image'])
-                    Foods.data[i].push(res.data[i]['action'])
-                }
-                initFoodTable();
-                return;
-            }
-            loadingDiv.classList.toggle('d-none');
-            initFoodTable();
-            generateMessage(res.status, res.message);
-            throw new Error(res.message);
-        })
-        .catch(console.error);
-
-    function initFoodTable() {
-        const foodTables = document.querySelector('#foodTables');
-        FoodDataTables = new simpleDatatables.DataTable(foodTables, {
-            data: Foods,
-            columns: [{
-                    select: 3,
-                    sortable: false,
-                    render: function(data) {
-                        return `<img src="{{ asset('images/categories') }}/${data}" class="img-fluid mx-auto d-block" alt="food-categories" width="100">`
-                    }
-                },
-                {
-                    select: 4,
-                    sortable: false,
-                    render: function(data, cell, row) {
-                        return `
-                            <button type="button" class="btn btn-warning btn-sm edit" data-id="${row.childNodes[0].textContent}" data-name="${row.childNodes[2].textContent}" data-image="${row.childNodes[3].childNodes[0].src}" data-bs-toggle="modal" data-bs-target="#editCategoryModal" data-index="${row.dataIndex}" onclick="showEdit(${row.dataIndex})" >Edit</button>
-                            <button type="button" class="btn btn-danger btn-sm delete" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal" data-index="${row.dataIndex}" onclick="showConfirm(${row.dataIndex})" >Delete</button>
-                            `;
-                    }
-                },
-                {
-                    select: 0,
-                    sortable: false,
-                    hidden: true
-                },
-                {
-                    select: 1,
-                    sortable: false,
-                    hidden: true
-                }
-            ],
-            perPage: 4,
-            perPageSelect: [4, 10, 20, 50]
-        });
-        const thead = document.querySelector("#foodTables > thead");
-        thead.classList.add("table-dark");
     }
 </script>
 @endsection

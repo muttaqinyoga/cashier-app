@@ -24,10 +24,10 @@
                         <a class="nav-link" aria-current="page" href="{{ url('admin/home') }}">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url('admin/categories') }}">Category List</a>
+                        <a class="nav-link categories" href="{{ url('admin/categories') }}">Category List</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url('admin/foods') }}">Food List</a>
+                        <a class="nav-link foods" href="{{ url('admin/foods') }}">Food List</a>
                     </li>
                 </ul>
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0">

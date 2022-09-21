@@ -54,7 +54,8 @@ class CategoryController extends Controller
             $payload = [
                 'id' => $newCategory->id,
                 'name' => $newCategory->name,
-                'image' => $newCategory->image
+                'image' => $newCategory->image,
+                'created_at' => $newCategory->created_at
             ];
             return response()->json(['status' => 'created', 'message' => 'New category added', 'data' => $payload], 201);
         } catch (Throwable $e) {
@@ -83,12 +84,13 @@ class CategoryController extends Controller
                 $request->file('category_edit_image')->move(public_path('/images/categories'), $imageName);
                 $category->image = $imageName;
             }
+            $category->update();
             $payload = [
                 'id' => $category->id,
                 'name' => $category->name,
-                'image' => $category->image
+                'image' => $category->image,
+                'updated_at' => $category->updated_at
             ];
-            $category->update();
             return response()->json(['status' => 'success', 'message' => 'Category data has beens updated', 'data' => $payload], 200);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['status' => 'failed', 'message' => 'Could not update requested data'], 400);
@@ -100,7 +102,6 @@ class CategoryController extends Controller
         try {
             $category = Category::findOrFail($request->category_delete_id);
             $category->delete();
-
             return response()->json(['status' => 'success', 'message' => "$category->name has been deleted"]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['status' => 'failed', 'message' => 'Could not delete requested data'], 400);

@@ -34,30 +34,43 @@ class DatabaseSeeder extends Seeder
         $category->slug = \Str::slug('Aneka Nasi', '-');
         $category->image = 'category-foods.png';
         $category->save();
+        $category2 = new Category;
+        $idCategory2 = Uuid::uuid4()->getHex();
+        $category2->id = $idCategory2;
+        $category2->name = 'Aneka Mie';
+        $category2->slug = \Str::slug('Aneka Mie', '-');
+        $category2->image = 'category-foods.png';
+        $category2->save();
+        // 
         // Food Seed
-        $foodJson = '[
-                        {
-                            "name": "Nasi Goreng Biasa",
-                            "price": 20000.00,
-                            "stock": "Tersedia"
-                        },
-                        {
-                            "name": "Nasi Goreng Spesial",
-                            "price": 30000.00,
-                            "stock": "Tersedia"
-                        }
-                    ]';
-        $foods = json_decode($foodJson, true);
-        foreach ($foods as $f) {
-            $food = new Food;
-            $food->id = Uuid::uuid4()->getHex();
-            $food->name = $f['name'];
-            $food->price = $f['price'];
-            $food->image = 'food-placeholder.jpeg';
-            $food->status_stock = $f['stock'];
-            $food->save();
-            $food->categories()->attach($idCategory);
-        }
+        $food = new Food;
+        $food->id = Uuid::uuid4()->getHex();
+        $food->name = 'Nasi Goreng Biasa';
+        $food->price = 12000.00;
+        $food->image = 'food-placeholder.jpeg';
+        $food->description = 'Nasi goreng dengan telur dan potongan sayur';
+        $food->status_stock = 'Tersedia';
+        $food->save();
+        $food->categories()->attach($idCategory);
+        $food2 = new Food;
+        $food2->id = Uuid::uuid4()->getHex();
+        $food2->name = 'Nasi Goreng Spesial';
+        $food2->price = 23000.00;
+        $food2->image = 'food-placeholder.jpeg';
+        $food2->description = 'Nasi goreng dengan potongan satu potong ayam, telur, dan potogan sayur';
+        $food2->status_stock = 'Tersedia';
+        $food2->save();
+        $food2->categories()->attach($idCategory);
+        $food3 = new Food;
+        $food3->id = Uuid::uuid4()->getHex();
+        $food3->name = 'Kwetiau Goreng';
+        $food3->price = 13000.00;
+        $food3->image = 'food-placeholder.jpeg';
+        $food3->description = 'Kwetiau goreng dengan potongan telur dan sayur';
+        $food3->status_stock = 'Tersedia';
+        $food3->save();
+        $food3->categories()->attach($idCategory2);
+
 
         // 
     }

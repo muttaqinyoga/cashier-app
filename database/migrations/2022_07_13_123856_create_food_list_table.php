@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('name');
             $table->double('price');
             $table->string('image');
+            $table->text('description')->nullable();
             $table->enum('status_stock', ['Tersedia', 'Tidak tersedia']);
             $table->timestamps();
         });

@@ -31,4 +31,5 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/admin/categories/update', [CategoryController::class, 'update']);
     Route::delete('/admin/categories/delete', [CategoryController::class, 'delete']);
     Route::get('/admin/foods', [FoodController::class, 'index']);
+    Route::get('/admin/foods/get', [FoodController::class, 'getListFood']);
 });
