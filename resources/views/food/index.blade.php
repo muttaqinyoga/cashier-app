@@ -11,7 +11,7 @@
         <div class="card-body text-white">
             <div class="row">
                 <div class="col-md-3">
-                    <button type="button" class="btn btn-primary" id="addFoodBtn">Add New Food</button>
+                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addFoodModal">Add New Food</button>
                 </div>
             </div>
             <div class="row mt-3">
@@ -49,7 +49,62 @@
         </div>
     </div>
 </div>
+<div class="modal fade text-left" id="addFoodModal" tabindex="-1" aria-labelledby="addFoodModal" role="dialog">
+    <div class="modal-dialog modal-dialog-top modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary">
+                <h4 class="modal-title text-light">Add Food Category</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 
+                </button>
+            </div>
+            <form method="post" id="addFoodForm">
+                @csrf
+                <div class="modal-body">
+                    <label>Name</label>
+                    <div class="form-group">
+                        <input type="text" placeholder="Enter food name..." class="form-control" name="food_name" id="food_name">
+                        <div class="invalid-feedback" id="food_name_feedback">
+
+                        </div>
+                    </div>
+                    <label>Category</label>
+                    <div class="form-group">
+                        <select class="form-select" id="food_categories" multiple>
+                            @foreach($categories as $c)
+                            <option value="{{ $c->id }}">{{ $c->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group mt-2">
+                        <div type="text" class="form-control" id="selected_categories">
+                            No category selected
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <input type="hidden" name="food_categories" id="food_categories">
+                    </div>
+                    <div class="form-group">
+                        <label>Image</label>
+                        <div class="form-group">
+                            <input class="form-control" type="file" name="category_image" id="category_image">
+                            <div class="invalid-feedback" id="category_image_feedback">
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-success ml-1" id="btnSubmitCategory">
+                            Save
+                        </button>
+                    </div>
+            </form>
+        </div>
+    </div>
+</div>
 <div class="toast-container position-fixed p-3 top-0 start-50 translate-middle-x">
     <div id="toastAlert" class="toast border-0" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="d-flex">
@@ -184,6 +239,14 @@
 
     // }
     // END
+    const food_categories = document.querySelector('#food_categories');
+    food_categories.addEventListener('change', function(e) {
+        const selected = this.options[this.selectedIndex];
+        console.log(selected.textContent);
+        const selected_categories = document.querySelector('#selected_categories');
+        const categories = [];
+        selected_categories.textContent = selected.textContent;
+    });
     /* ------- Get Categories ------- */
     fetch("{{ url('admin/foods/get') }}")
         .then(response => {
