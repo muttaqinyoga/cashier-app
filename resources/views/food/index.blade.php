@@ -240,13 +240,26 @@
     // }
     // END
     const food_categories = document.querySelector('#food_categories');
+    const categories = [];
+    let elem = ``;
+
     food_categories.addEventListener('change', function(e) {
         const selected = this.options[this.selectedIndex];
-        console.log(selected.textContent);
         const selected_categories = document.querySelector('#selected_categories');
-        const categories = [];
-        selected_categories.textContent = selected.textContent;
+        categories.push(selected.textContent);
+        const value = String(selected.value);
+        elem += `<small>${selected.textContent} <span class="badge rounded-pill bg-danger category-selected" style="cursor: pointer;" data-id="${selected.value}" data-name="${selected.textContent}" onclick="removeSelected(${value})"  >x</span> </small>`;
+        selected_categories.innerHTML = elem;
+        categories.push({
+            id: selected.value,
+            name: selected.textContent
+        });
+        this.remove(this.selectedIndex);
     });
+
+    // function removeSelected(id, name) {
+    //     console.log(name);
+    // }
     /* ------- Get Categories ------- */
     fetch("{{ url('admin/foods/get') }}")
         .then(response => {
