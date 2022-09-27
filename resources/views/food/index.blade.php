@@ -242,13 +242,12 @@
     const food_categories = document.querySelector('#food_categories');
     const categories = [];
     const selected_categories = document.querySelector('#selected_categories');
+
+    const ctgPlaceholder = document.querySelector('#ctgPlaceholder');
     food_categories.addEventListener('change', function(e) {
-
         const selected = this.options[this.selectedIndex];
-
-        const ctgPlaceholder = document.querySelector('#ctgPlaceholder');
-        if (ctgPlaceholder) {
-            selected_categories.removeChild(ctgPlaceholder);
+        if (selected_categories.childElementCount <= 1) {
+            ctgPlaceholder.textContent = '';
         }
 
         const elem = document.createElement('small');
@@ -264,9 +263,22 @@
     function removeSelected(id, name) {
         const el = document.querySelector('.category-selected-' + id);
         const small = el.parentElement;
-        if (el) {
-            selected_categories.removeChild(small)
+        if (el && small) {
+            selected_categories.removeChild(small);
+            const itemRemoved = {
+                id: id,
+                name: name
+            }
+            const opt = document.createElement('option');
+            opt.value = itemRemoved.id;
+            opt.textContent = itemRemoved.name;
+            food_categories.insertBefore(opt, food_categories.firstChild);
+            if (selected_categories.childElementCount <= 1) {
+                ctgPlaceholder.textContent = 'No category selected';
+            }
+            return categories.splice(categories.findIndex(i => i.id == itemRemoved.id), 1);
         }
+        window.location.href = window.location.href;
     }
     /* ------- Get Categories ------- */
     fetch("{{ url('admin/foods/get') }}")
