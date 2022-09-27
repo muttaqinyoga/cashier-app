@@ -78,7 +78,7 @@
                     </div>
                     <div class="form-group mt-2">
                         <div type="text" class="form-control" id="selected_categories">
-                            No category selected
+                            <small id="ctgPlaceholder">No category selected</small>
                         </div>
                     </div>
                     <div class="form-group">
@@ -241,15 +241,19 @@
     // END
     const food_categories = document.querySelector('#food_categories');
     const categories = [];
-    let elem = ``;
-
+    const selected_categories = document.querySelector('#selected_categories');
     food_categories.addEventListener('change', function(e) {
+
         const selected = this.options[this.selectedIndex];
-        const selected_categories = document.querySelector('#selected_categories');
-        categories.push(selected.textContent);
-        const value = String(selected.value);
-        elem += `<small>${selected.textContent} <span class="badge rounded-pill bg-danger category-selected" style="cursor: pointer;" data-id="${selected.value}" data-name="${selected.textContent}" onclick="removeSelected(${value})"  >x</span> </small>`;
-        selected_categories.innerHTML = elem;
+
+        const ctgPlaceholder = document.querySelector('#ctgPlaceholder');
+        if (ctgPlaceholder) {
+            selected_categories.removeChild(ctgPlaceholder);
+        }
+
+        const elem = document.createElement('small');
+        elem.innerHTML = ` ${selected.textContent} <span class="badge rounded-pill bg-danger category-selected-${selected.value}" onclick="removeSelected('${selected.value}', '${selected.textContent}')" style="cursor: pointer;" > x </span>`;
+        selected_categories.appendChild(elem);
         categories.push({
             id: selected.value,
             name: selected.textContent
@@ -257,9 +261,13 @@
         this.remove(this.selectedIndex);
     });
 
-    // function removeSelected(id, name) {
-    //     console.log(name);
-    // }
+    function removeSelected(id, name) {
+        const el = document.querySelector('.category-selected-' + id);
+        const small = el.parentElement;
+        if (el) {
+            selected_categories.removeChild(small)
+        }
+    }
     /* ------- Get Categories ------- */
     fetch("{{ url('admin/foods/get') }}")
         .then(response => {
