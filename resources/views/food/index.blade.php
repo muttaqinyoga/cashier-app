@@ -53,7 +53,7 @@
     <div class="modal-dialog modal-dialog-top modal-dialog-scrollable" role="document">
         <div class="modal-content">
             <div class="modal-header bg-primary">
-                <h4 class="modal-title text-light">Add Food Category</h4>
+                <h4 class="modal-title text-light">Add Food</h4>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
 
                 </button>
@@ -61,15 +61,15 @@
             <form method="post" id="addFoodForm">
                 @csrf
                 <div class="modal-body">
-                    <label>Name</label>
                     <div class="form-group">
+                        <label>Name</label>
                         <input type="text" placeholder="Enter food name..." class="form-control" name="food_name" id="food_name">
                         <div class="invalid-feedback" id="food_name_feedback">
 
                         </div>
                     </div>
-                    <label>Category</label>
                     <div class="form-group">
+                        <label>Category</label>
                         <select class="form-select" id="food_categories" multiple>
                             @foreach($categories as $c)
                             <option value="{{ $c->id }}">{{ $c->name }}</option>
@@ -82,13 +82,24 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <input type="hidden" name="food_categories" id="food_categories">
+                        <label>Sell Price</label>
+                        <input type="number" min="0" placeholder="ex. 10000" class="form-control" name="food_price" id="food_price">
+                        <div class="invalid-feedback" id="food_price_feedback">
+
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea class="form-control" name="food_description" id="food_description" rows="2"></textarea>
+                        <div class="invalid-feedback" id="food_description_feedback">
+
+                        </div>
                     </div>
                     <div class="form-group">
                         <label>Image</label>
                         <div class="form-group">
-                            <input class="form-control" type="file" name="category_image" id="category_image">
-                            <div class="invalid-feedback" id="category_image_feedback">
+                            <input class="form-control" type="file" name="food_image" id="food_image">
+                            <div class="invalid-feedback" id="food_image_feedback">
 
                             </div>
                         </div>
@@ -97,7 +108,7 @@
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                             Cancel
                         </button>
-                        <button type="submit" class="btn btn-success ml-1" id="btnSubmitCategory">
+                        <button type="submit" class="btn btn-success ml-1" id="btnSubmitFood">
                             Save
                         </button>
                     </div>
@@ -208,36 +219,36 @@
     }
     // END
     // Validate Image
-    // function validateImage(image, act) {
-    //     if (act == 'add') {
-    //         if (!['image/jpg', 'image/jpeg', 'image/png'].includes(image.type)) {
-    //             category_image.classList.add('is-invalid');
-    //             category_image_feedback.textContent = "Only.jpg, jpeg and.png image are allowed";
-    //             category_image.value = '';
-    //             return;
-    //         }
-    //         if (image.size > 100000) {
-    //             category_image.classList.add('is-invalid');
-    //             category_image_feedback.textContent = "Image size must be less than 100KB";
-    //             category_image.value = '';
-    //             return;
-    //         }
-    //     } else {
-    //         if (!['image/jpg', 'image/jpeg', 'image/png'].includes(image.type)) {
-    //             category_edit_image.classList.add('is-invalid');
-    //             category_edit_image_feedback.textContent = "Only.jpg, jpeg and.png image are allowed";
-    //             category_edit_image.value = '';
-    //             return;
-    //         }
-    //         if (image.size > 100000) {
-    //             category_edit_image.classList.add('is-invalid');
-    //             category_edit_image_feedback.textContent = "Image size must be less than 100KB";
-    //             category_edit_image.value = '';
-    //             return;
-    //         }
-    //     }
+    function validateImage(image, act) {
+        if (act == 'add') {
+            if (!['image/jpg', 'image/jpeg', 'image/png'].includes(image.type)) {
+                food_image.classList.add('is-invalid');
+                food_image_feedback.textContent = "Only.jpg, jpeg and.png image are allowed";
+                food_image.value = '';
+                return;
+            }
+            if (image.size > 100000) {
+                food_image.classList.add('is-invalid');
+                food_image_feedback.textContent = "Image size must be less than 100KB";
+                food_image.value = '';
+                return;
+            }
+        } else {
+            if (!['image/jpg', 'image/jpeg', 'image/png'].includes(image.type)) {
+                category_edit_image.classList.add('is-invalid');
+                category_edit_image_feedback.textContent = "Only.jpg, jpeg and.png image are allowed";
+                category_edit_image.value = '';
+                return;
+            }
+            if (image.size > 100000) {
+                category_edit_image.classList.add('is-invalid');
+                category_edit_image_feedback.textContent = "Image size must be less than 100KB";
+                category_edit_image.value = '';
+                return;
+            }
+        }
 
-    // }
+    }
     // END
     const food_categories = document.querySelector('#food_categories');
     const categories = [];
@@ -281,127 +292,156 @@
         window.location.href = window.location.href;
     }
     /* ------- Get Categories ------- */
-    fetch("{{ url('admin/foods/get') }}")
-        .then(response => {
-            return response.json();
-        })
-        .then(res => {
-            if (res.status === 'success') {
-                loadingDiv.classList.toggle('d-none');
-                for (let i = 0; i < res.data.length; i++) {
-                    const categories = [];
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch("{{ url('admin/foods/get') }}")
+            .then(response => {
+                return response.json();
+            })
+            .then(res => {
+                if (res.status === 'success') {
+                    loadingDiv.classList.toggle('d-none');
+                    for (let i = 0; i < res.data.length; i++) {
+                        const categories = [];
 
-                    for (let j = 0; j < res.data[i]['categories'].length; j++) {
-                        categories.push(res.data[i]['categories'][j]['name']);
+                        for (let j = 0; j < res.data[i]['categories'].length; j++) {
+                            categories.push(res.data[i]['categories'][j]['name']);
+                        }
+                        Foods.data[i] = [];
+                        Foods.data[i].push(res.data[i]['id']);
+                        Foods.data[i].push(res.data[i]['slug']);
+                        Foods.data[i].push(res.data[i]['name']);
+                        Foods.data[i].push(categories.join(", "));
+                        Foods.data[i].push(res.data[i]['price']);
+                        Foods.data[i].push(res.data[i]['status_stock']);
+                        Foods.data[i].push(res.data[i]['created_at']);
+                        Foods.data[i].push(res.data[i]['image']);
+                        Foods.data[i].push(res.data[i]['description']);
                     }
-                    Foods.data[i] = [];
-                    Foods.data[i].push(res.data[i]['id']);
-                    Foods.data[i].push(res.data[i]['slug']);
-                    Foods.data[i].push(res.data[i]['name']);
-                    Foods.data[i].push(categories.join(", "));
-                    Foods.data[i].push(res.data[i]['price']);
-                    Foods.data[i].push(res.data[i]['status_stock']);
-                    Foods.data[i].push(res.data[i]['created_at']);
-                    Foods.data[i].push(res.data[i]['image']);
-                    Foods.data[i].push(res.data[i]['description']);
+                    initFoodTable();
+                    return;
                 }
+                loadingDiv.classList.toggle('d-none');
                 initFoodTable();
-                return;
-            }
-            loadingDiv.classList.toggle('d-none');
-            initFoodTable();
-            generateMessage(res.status, res.message);
-            throw new Error(res.message);
-        })
-        .catch(console.error);
+                generateMessage(res.status, res.message);
+                throw new Error(res.message);
+            })
+            .catch(console.error);
+    });
+
     /* ------- End Get Categories ------- */
 
     /* ------- Save Categories ------- */
-    // // Initialize Var and DOM
-    // let category_name_value = null;
-    // const addCategoryModal = new bootstrap.Modal('#addCategoryModal');
-    // const btnSubmitCategory = document.querySelector('#btnSubmitCategory');
-    // const addCategoryForm = document.querySelector("#addCategoryForm");
-    // const category_name = document.getElementsByName('category_name')[0];
-    // const category_image = document.getElementsByName('category_image')[0];
-    // const category_name_feedback = document.querySelector("#category_name_feedback");
-    // const category_image_feedback = document.querySelector("#category_image_feedback");
-    // // END
-    // // Validate form
-    // category_name.addEventListener("input", () => {
-    //     category_name_value = category_name.value.trim();
-    //     category_name.classList.remove('is-invalid');
-    //     if (category_name_value == '') {
-    //         category_name.value = '';
-    //         category_name.classList.add('is-invalid');
-    //         category_name_feedback.textContent = "Name can't be empty";
-    //     }
-    // });
-    // category_image.addEventListener('change', () => {
-    //     category_image.classList.remove('is-invalid');
-    //     validateImage(category_image.files[0], 'add');
-    // });
-    // // End
-    // // Submit form
-    // addCategoryForm.addEventListener("submit", function(e) {
-    //     e.preventDefault();
-    //     if (category_name_value == '' || category_name_value == null) {
-    //         category_name.classList.add('is-invalid');
-    //         category_name_feedback.textContent = "Name can't be empty";
+    // Initialize Var and DOM
+    let food_name_value = null;
+    let food_price_value = null;
+    const addFoodModal = new bootstrap.Modal('#addFoodModal');
+    const btnSubmitFood = document.querySelector('#btnSubmitFood');
+    const addFoodForm = document.querySelector("#addFoodForm");
+    const food_name = document.getElementsByName('food_name')[0];
+    const food_image = document.getElementsByName('food_image')[0];
+    const food_price = document.getElementsByName('food_price')[0];
+    const food_description = document.getElementsByName('food_description')[0];
+    const food_name_feedback = document.querySelector("#food_name_feedback");
+    const food_image_feedback = document.querySelector("#food_image_feedback");
+    const food_price_feedback = document.querySelector("#food_price_feedback");
+    const food_description_feedback = document.querySelector("#food_description_feedback");
+    // END
+    // Validate form
+    food_name.addEventListener("input", () => {
+        food_name_value = food_name.value.trim();
+        food_name.classList.remove('is-invalid');
+        if (food_name_value == '') {
+            food_name.value = '';
+            food_name.classList.add('is-invalid');
+            food_name_feedback.textContent = "Name can't be empty";
+        }
+    });
+    food_price.addEventListener("input", () => {
+        food_price_value = food_price.value.trim();
+        food_price.classList.remove('is-invalid');
+        if (food_price_value == '' || food_price_value == null) {
+            food_price.value = '';
+            food_price.classList.add('is-invalid');
+            food_price_feedback.textContent = "Sell price can't be empty";
+        } else if (isNaN(parseFloat(food_price_value)) || parseFloat(food_price_value) < 0) {
+            food_price.value = '';
+            food_price.classList.add('is-invalid');
+            food_price_feedback.textContent = "Please provide valid number";
+        }
+    });
+    food_description.addEventListener("input", () => {
+        food_description = food_description.value.trim();
+        food_description.classList.remove('is-invalid');
+        if (food_description.value.length > 10) {
+            food_description.classList.add('is-invalid');
+            food_description_feedback.textContent = "Too much description";
+        }
+    });
+    food_image.addEventListener('change', () => {
+        food_image.classList.remove('is-invalid');
+        validateImage(food_image.files[0], 'add');
+    });
+    // End
+    // Submit form
+    addFoodForm.addEventListener("submit", function(e) {
+        e.preventDefault();
+        if (category_name_value == '' || category_name_value == null) {
+            category_name.classList.add('is-invalid');
+            category_name_feedback.textContent = "Name can't be empty";
 
-    //     } else {
-    //         const payloadCategory = new FormData(addCategoryForm);
-    //         btnSubmitCategory.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...`;
-    //         btnSubmitCategory.setAttribute('disabled', 'disabled');
+        } else {
+            const payloadCategory = new FormData(addCategoryForm);
+            btnSubmitCategory.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...`;
+            btnSubmitCategory.setAttribute('disabled', 'disabled');
 
-    //         fetch("{{ url('admin/categories/save') }}", {
-    //                 method: "POST",
-    //                 headers: {
-    //                     accept: 'application/json'
-    //                 },
-    //                 credentials: "same-origin",
-    //                 body: payloadCategory
-    //             })
-    //             .then(response => response.json())
-    //             .then(res => {
-    //                 if (res.status === 'failed') {
-    //                     if (res.errors) {
-    //                         Object.keys(res.errors).forEach((key, index) => {
-    //                             const elemInput = document.getElementById(key);
-    //                             const elemFeedBack = document.getElementById(key + "_feedback");
-    //                             if (elemInput && elemFeedBack) {
-    //                                 elemInput.classList.add('is-invalid');
-    //                                 elemFeedBack.textContent = res.errors[key][0];
-    //                                 btnSubmitCategory.innerHTML = 'Save';
-    //                                 btnSubmitCategory.removeAttribute('disabled');
-    //                             }
-    //                         });
-    //                         return;
-    //                     }
-    //                     addCategoryModal.hide();
-    //                     resetAction();
-    //                     generateMessage(res.status, res.message);
-    //                 } else if (res.status === 'created') {
-    //                     resetAction();
-    //                     addCategoryModal.hide();
-    //                     const currLength = Foods.data.length;
-    //                     Foods.data.push([]);
-    //                     Foods.data[currLength].push(res.data.id);
-    //                     Foods.data[currLength].push(res.data.slug);
-    //                     Foods.data[currLength].push(res.data.name);
-    //                     Foods.data[currLength].push(res.data.image);
-    //                     Foods.data[currLength].push(res.data.created_at);
-    //                     Foods.data.sort((a, b) => {
-    //                         return new Date(b[4]).getTime() - new Date(a[4]).getTime();
-    //                     });
-    //                     FoodDataTables.destroy();
-    //                     initFoodTable();
-    //                     generateMessage(res.status, res.message);
-    //                 }
-    //             })
-    //             .catch(err => console.error);
-    //     }
-    // });
+            fetch("{{ url('admin/categories/save') }}", {
+                    method: "POST",
+                    headers: {
+                        accept: 'application/json'
+                    },
+                    credentials: "same-origin",
+                    body: payloadCategory
+                })
+                .then(response => response.json())
+                .then(res => {
+                    if (res.status === 'failed') {
+                        if (res.errors) {
+                            Object.keys(res.errors).forEach((key, index) => {
+                                const elemInput = document.getElementById(key);
+                                const elemFeedBack = document.getElementById(key + "_feedback");
+                                if (elemInput && elemFeedBack) {
+                                    elemInput.classList.add('is-invalid');
+                                    elemFeedBack.textContent = res.errors[key][0];
+                                    btnSubmitCategory.innerHTML = 'Save';
+                                    btnSubmitCategory.removeAttribute('disabled');
+                                }
+                            });
+                            return;
+                        }
+                        addCategoryModal.hide();
+                        resetAction();
+                        generateMessage(res.status, res.message);
+                    } else if (res.status === 'created') {
+                        resetAction();
+                        addCategoryModal.hide();
+                        const currLength = Foods.data.length;
+                        Foods.data.push([]);
+                        Foods.data[currLength].push(res.data.id);
+                        Foods.data[currLength].push(res.data.slug);
+                        Foods.data[currLength].push(res.data.name);
+                        Foods.data[currLength].push(res.data.image);
+                        Foods.data[currLength].push(res.data.created_at);
+                        Foods.data.sort((a, b) => {
+                            return new Date(b[4]).getTime() - new Date(a[4]).getTime();
+                        });
+                        FoodDataTables.destroy();
+                        initFoodTable();
+                        generateMessage(res.status, res.message);
+                    }
+                })
+                .catch(err => console.error);
+        }
+    });
     // END
     /* ------- End Save Categories ------- */
 
