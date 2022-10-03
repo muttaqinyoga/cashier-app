@@ -44,12 +44,11 @@ class FoodController extends Controller
         }
         // validate categories
         $reqCategories = explode(",", $request->food_categories);
+        $validCategories = collect();
         try {
-            foreach ($reqCategories as $c) {
-                $validCategories = DB::table('categories')->select('id')->where('id', '=', $c)->get();
-                if ($validCategories->isEmpty()) {
-                    return response()->json(['status' => 'failed', 'errors' => ['food_categories' => ['The food categories does not exists']]], 400);
-                }
+            $validCategories->add(DB::table('categories')->select('id', 'name')->whereIn('id', $reqCategories)->get());
+            if ($validCategories->first()->count() != count($reqCategories)) {
+                return response()->json(['status' => 'failed', 'errors' => ['food_categories' => ['The food categories does not exists']]], 400);
             }
         } catch (QueryException $e) {
             return response()->json(['status' => 'failed', 'errors' => ['food_categories' => ['Could not get categories']]], 400);
@@ -81,7 +80,7 @@ class FoodController extends Controller
                 'status_stock' => $newFood->status_stock,
                 'description' => $newFood->description,
                 'created_at' => $newFood->created_at,
-                'categories' => $newFood->categories()->get()
+                'categories' => $validCategories->first()
             ];
             DB::commit();
             return response()->json(['status' => 'created', 'message' => 'New food added', 'data' => $payload], 201);

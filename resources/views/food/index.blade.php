@@ -424,20 +424,17 @@
                         generateMessage(res.status, res.message);
                     } else if (res.status === 'created') {
                         addFoodModal.hide();
-                        const newCategories = res.data.categories;
-                        console.log(newCategories);
-                        resetAction(newCategories);
-
+                        const resCategories = res.data.categories;
                         const currLength = Foods.data.length;
-                        const categories = [];
-                        newCategories.forEach(i => {
-                            categories.push(i.name);
+                        const resTblCategories = [];
+                        resCategories.forEach(i => {
+                            resTblCategories.push(i.name);
                         });
 
                         Foods.data.push([]);
                         Foods.data[currLength].push(res.data['id']);
                         Foods.data[currLength].push(res.data['name']);
-                        Foods.data[currLength].push(categories.join(", "));
+                        Foods.data[currLength].push(resTblCategories.join(", "));
                         Foods.data[currLength].push(res.data['price']);
                         Foods.data[currLength].push(res.data['status_stock']);
                         Foods.data[currLength].push(res.data['created_at']);
@@ -449,6 +446,7 @@
                         FoodDataTables.destroy();
                         initFoodTable();
                         generateMessage(res.status, res.message);
+                        resetAction(resCategories);
                     }
                 })
                 .catch(err => console.error);
@@ -649,38 +647,42 @@
     // }
     /* ------- End Delete Categories ------- */
 
-    function resetAction(data) {
-        console.log("data");
-        console.log(data);
-        // addFoodForm.reset();
+    function resetAction(data = []) {
+        // reset after insert categories
+        if (data.length > 0) {
+            data.forEach(d => {
+                const el = document.querySelector('.category-selected-' + d.id);
+                const small = el.parentElement;
+                if (el && small) {
+                    selected_categories.removeChild(small);
+                    const opt = document.createElement('option');
+                    opt.value = d.id;
+                    opt.textContent = d.name;
+                    food_categories.appendChild(opt);
+                    if (selected_categories.childElementCount <= 1) {
+                        ctgPlaceholder.textContent = 'No category selected';
+                        selected_categories.classList.remove('is-invalid');
+                    }
+                }
+            });
+        }
+
+        btnSubmitFood.innerHTML = 'Save';
+        btnSubmitFood.removeAttribute('disabled');
+        food_name.classList.remove('is-invalid');
+        food_image.classList.remove('is-invalid');
+        food_price.classList.remove('is-invalid');
+        food_description.classList.remove('is-invalid');
+        selected_categories.classList.remove('is-invalid');
+        addFoodForm.reset();
+        food_name_value = null;
+        food_price_value = null;
+        food_description_value = '';
+        categories.length = 0;
+
         // deleteCategoryForm.reset();
         // editCategoryForm.reset();
-        // btnSubmitFood.innerHTML = 'Save';
-        // btnSubmitFood.removeAttribute('disabled');
-        // food_name.classList.remove('is-invalid');
-        // food_image.classList.remove('is-invalid');
-        // food_price.classList.remove('is-invalid');
-        // food_description.classList.remove('is-invalid');
-        // food_name_value = null;
-        // food_price_value = null;
-        // food_description_value = '';
-        // categories = [];
-        // selected_categories.classList.remove('is-invalid');
 
-        // if (data.length > 0) {
-        //     data.forEach(d => {
-        //         const el = document.querySelector('.category-selected-' + d.id);
-        //         const small = el.parentElement;
-        //         if (el && small) {
-        //             selected_categories.removeChild(small);
-        //             const opt = document.createElement('option');
-        //             opt.value = id;
-        //             opt.textContent = name;
-        //             food_categories.appendChild(opt);
-        //         }
-        //         ctgPlaceholder.textContent = 'No category selected';
-        //     });
-        // }
         // btnEditSubmitCategory.innerHTML = 'Update';
         // btnEditSubmitCategory.removeAttribute('disabled');
         // btnDeleteCategory.innerHTML = 'Yes';
