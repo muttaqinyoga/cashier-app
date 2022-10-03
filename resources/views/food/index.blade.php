@@ -49,6 +49,16 @@
         </div>
     </div>
 </div>
+<div class="toast-container position-fixed p-3 top-0 start-50 translate-middle-x">
+    <div id="toastAlert" class="toast border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body text-light">
+
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
 <div class="modal fade text-left" id="addFoodModal" tabindex="-1" aria-labelledby="addFoodModal" role="dialog">
     <div class="modal-dialog modal-dialog-top modal-dialog-scrollable" role="document">
         <div class="modal-content">
@@ -70,11 +80,15 @@
                     </div>
                     <div class="form-group">
                         <label>Category</label>
-                        <select class="form-select" id="food_categories" multiple>
+                        <select class="form-select" id="food_categories">
+                            <option selected>-Choose category--</option>
                             @foreach($categories as $c)
                             <option value="{{ $c->id }}">{{ $c->name }}</option>
                             @endforeach
                         </select>
+                        <div class="invalid-feedback" id="food_categories_feedback">
+
+                        </div>
                     </div>
                     <div class="form-group mt-2">
                         <div type="text" class="form-control" id="selected_categories">
@@ -90,7 +104,7 @@
                     </div>
                     <div class="form-group">
                         <label>Description</label>
-                        <textarea class="form-control" name="food_description" id="food_description" rows="2"></textarea>
+                        <textarea class="form-control" name="food_description" id="food_description" rows="3"></textarea>
                         <div class="invalid-feedback" id="food_description_feedback">
 
                         </div>
@@ -116,16 +130,7 @@
         </div>
     </div>
 </div>
-<div class="toast-container position-fixed p-3 top-0 start-50 translate-middle-x">
-    <div id="toastAlert" class="toast border-0" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="d-flex">
-            <div class="toast-body text-light">
 
-            </div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-    </div>
-</div>
 @endsection
 @section('custom-script')
 <script src="{{ asset('simple-datatables/simple-datatables.js') }}"></script>
@@ -145,6 +150,7 @@
             toastAlert.classList.remove("bg-success");
             toastAlert.classList.add("bg-danger");
             toastBody.textContent = message;
+            console.log(toastBody.textContent)
         }
         toast.show();
     }
@@ -155,7 +161,7 @@
     // END
     // Initialize Datatable
     let Foods = {
-        headings: ["Id", "Slug", "Name", "Categories", "Price", "Status", "Action", "image", "desc"],
+        headings: ["Id", "Name", "Categories", "Price", "Status", "Action", "image", "desc"],
         data: []
     };
     let FoodDataTables = null;
@@ -165,7 +171,7 @@
         FoodDataTables = new simpleDatatables.DataTable(foodTables, {
             data: Foods,
             columns: [{
-                    select: 5,
+                    select: 4,
                     render: function(data) {
                         return data == 'Tersedia' ? `<span class="badge rounded-pill bg-primary">${data}</span>` : `<span class="badge rounded-pill bg-danger">${data}</span>`
                     }
@@ -176,16 +182,16 @@
                     hidden: true
                 },
                 {
-                    select: 8,
+                    select: 6,
                     sortable: false,
                     hidden: true
                 },
                 {
-                    select: 3,
+                    select: 2,
                     sortable: false
                 },
                 {
-                    select: 6,
+                    select: 5,
                     sortable: false,
                     render: function(data, cell, row) {
                         return `
@@ -195,18 +201,13 @@
                     }
                 },
                 {
-                    select: 4,
+                    select: 3,
                     render: function(data) {
                         return formatRupiah(data, 'Rp. ');
                     }
                 },
                 {
                     select: 0,
-                    sortable: false,
-                    hidden: true
-                },
-                {
-                    select: 1,
                     sortable: false,
                     hidden: true
                 }
@@ -227,7 +228,7 @@
                 food_image.value = '';
                 return;
             }
-            if (image.size > 100000) {
+            if (image.size > 20000) {
                 food_image.classList.add('is-invalid');
                 food_image_feedback.textContent = "Image size must be less than 100KB";
                 food_image.value = '';
@@ -260,14 +261,11 @@
         if (selected_categories.childElementCount <= 1) {
             ctgPlaceholder.textContent = '';
         }
-
+        selected_categories.classList.remove('is-invalid');
         const elem = document.createElement('small');
         elem.innerHTML = ` ${selected.textContent} <span class="badge rounded-pill bg-danger category-selected-${selected.value}" onclick="removeSelected('${selected.value}', '${selected.textContent}')" style="cursor: pointer;" > x </span>`;
         selected_categories.appendChild(elem);
-        categories.push({
-            id: selected.value,
-            name: selected.textContent
-        });
+        categories.push(selected.value);
         this.remove(this.selectedIndex);
     });
 
@@ -276,18 +274,15 @@
         const small = el.parentElement;
         if (el && small) {
             selected_categories.removeChild(small);
-            const itemRemoved = {
-                id: id,
-                name: name
-            }
             const opt = document.createElement('option');
-            opt.value = itemRemoved.id;
-            opt.textContent = itemRemoved.name;
-            food_categories.insertBefore(opt, food_categories.firstChild);
+            opt.value = id;
+            opt.textContent = name;
+            food_categories.appendChild(opt);
             if (selected_categories.childElementCount <= 1) {
                 ctgPlaceholder.textContent = 'No category selected';
+                selected_categories.classList.add('is-invalid');
             }
-            return categories.splice(categories.findIndex(i => i.id == itemRemoved.id), 1);
+            return categories.splice(categories.findIndex(i => i == id), 1);
         }
         window.location.href = window.location.href;
     }
@@ -308,7 +303,6 @@
                         }
                         Foods.data[i] = [];
                         Foods.data[i].push(res.data[i]['id']);
-                        Foods.data[i].push(res.data[i]['slug']);
                         Foods.data[i].push(res.data[i]['name']);
                         Foods.data[i].push(categories.join(", "));
                         Foods.data[i].push(res.data[i]['price']);
@@ -334,6 +328,7 @@
     // Initialize Var and DOM
     let food_name_value = null;
     let food_price_value = null;
+    let food_description_value = '';
     const addFoodModal = new bootstrap.Modal('#addFoodModal');
     const btnSubmitFood = document.querySelector('#btnSubmitFood');
     const addFoodForm = document.querySelector("#addFoodForm");
@@ -370,11 +365,11 @@
         }
     });
     food_description.addEventListener("input", () => {
-        food_description = food_description.value.trim();
+        food_description_value = food_description.value.trim();
         food_description.classList.remove('is-invalid');
-        if (food_description.value.length > 10) {
+        if (food_description.value.length > 100) {
             food_description.classList.add('is-invalid');
-            food_description_feedback.textContent = "Too much description";
+            food_description_feedback.textContent = "Characters must be less than 100 characters";
         }
     });
     food_image.addEventListener('change', () => {
@@ -385,22 +380,28 @@
     // Submit form
     addFoodForm.addEventListener("submit", function(e) {
         e.preventDefault();
-        if (category_name_value == '' || category_name_value == null) {
-            category_name.classList.add('is-invalid');
-            category_name_feedback.textContent = "Name can't be empty";
-
+        if (food_name_value == '' || food_name_value == null || food_price_value == '' || food_price_value == null) {
+            food_name.classList.add('is-invalid');
+            food_name_feedback.textContent = "Name can't be empty";
+            food_price.classList.add('is-invalid');
+            food_price_feedback.textContent = "Sell price can't be empty";
+            selected_categories.classList.add('is-invalid');
+        } else if (isNaN(parseFloat(food_price_value)) || parseFloat(food_price_value) < 0) {
+            food_price.classList.add('is-invalid');
+            food_price_feedback.textContent = "Please provide valid number";
         } else {
-            const payloadCategory = new FormData(addCategoryForm);
-            btnSubmitCategory.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...`;
-            btnSubmitCategory.setAttribute('disabled', 'disabled');
+            const payloadFood = new FormData(addFoodForm);
+            payloadFood.append('food_categories', categories);
+            btnSubmitFood.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...`;
+            btnSubmitFood.setAttribute('disabled', 'disabled');
 
-            fetch("{{ url('admin/categories/save') }}", {
+            fetch("{{ url('admin/foods/save') }}", {
                     method: "POST",
                     headers: {
                         accept: 'application/json'
                     },
                     credentials: "same-origin",
-                    body: payloadCategory
+                    body: payloadFood
                 })
                 .then(response => response.json())
                 .then(res => {
@@ -412,27 +413,38 @@
                                 if (elemInput && elemFeedBack) {
                                     elemInput.classList.add('is-invalid');
                                     elemFeedBack.textContent = res.errors[key][0];
-                                    btnSubmitCategory.innerHTML = 'Save';
-                                    btnSubmitCategory.removeAttribute('disabled');
+                                    btnSubmitFood.innerHTML = 'Save';
+                                    btnSubmitFood.removeAttribute('disabled');
                                 }
                             });
                             return;
                         }
-                        addCategoryModal.hide();
+                        addFoodModal.hide();
                         resetAction();
                         generateMessage(res.status, res.message);
                     } else if (res.status === 'created') {
-                        resetAction();
-                        addCategoryModal.hide();
+                        addFoodModal.hide();
+                        const newCategories = res.data.categories;
+                        console.log(newCategories);
+                        resetAction(newCategories);
+
                         const currLength = Foods.data.length;
+                        const categories = [];
+                        newCategories.forEach(i => {
+                            categories.push(i.name);
+                        });
+
                         Foods.data.push([]);
-                        Foods.data[currLength].push(res.data.id);
-                        Foods.data[currLength].push(res.data.slug);
-                        Foods.data[currLength].push(res.data.name);
-                        Foods.data[currLength].push(res.data.image);
-                        Foods.data[currLength].push(res.data.created_at);
+                        Foods.data[currLength].push(res.data['id']);
+                        Foods.data[currLength].push(res.data['name']);
+                        Foods.data[currLength].push(categories.join(", "));
+                        Foods.data[currLength].push(res.data['price']);
+                        Foods.data[currLength].push(res.data['status_stock']);
+                        Foods.data[currLength].push(res.data['created_at']);
+                        Foods.data[currLength].push(res.data['image']);
+                        Foods.data[currLength].push(res.data['description']);
                         Foods.data.sort((a, b) => {
-                            return new Date(b[4]).getTime() - new Date(a[4]).getTime();
+                            return new Date(b[5]).getTime() - new Date(a[5]).getTime();
                         });
                         FoodDataTables.destroy();
                         initFoodTable();
@@ -637,25 +649,51 @@
     // }
     /* ------- End Delete Categories ------- */
 
-    // function resetAction() {
-    //     addCategoryForm.reset();
-    //     deleteCategoryForm.reset();
-    //     editCategoryForm.reset();
-    //     btnSubmitCategory.innerHTML = 'Save';
-    //     btnSubmitCategory.removeAttribute('disabled');
-    //     btnEditSubmitCategory.innerHTML = 'Update';
-    //     btnEditSubmitCategory.removeAttribute('disabled');
-    //     btnDeleteCategory.innerHTML = 'Yes';
-    //     btnDeleteCategory.removeAttribute('disabled');
-    //     category_edit_name.classList.remove('is-invalid');
-    //     category_edit_image.classList.remove('is-invalid');
-    //     category_name.classList.remove('is-invalid');
-    //     category_image.classList.remove('is-invalid');
-    //     category_name_value = null;
-    //     category_edit_name_value = null;
-    //     deleted_index_category = null;
-    //     updated_index_category = null;
-    // }
+    function resetAction(data) {
+        console.log("data");
+        console.log(data);
+        // addFoodForm.reset();
+        // deleteCategoryForm.reset();
+        // editCategoryForm.reset();
+        // btnSubmitFood.innerHTML = 'Save';
+        // btnSubmitFood.removeAttribute('disabled');
+        // food_name.classList.remove('is-invalid');
+        // food_image.classList.remove('is-invalid');
+        // food_price.classList.remove('is-invalid');
+        // food_description.classList.remove('is-invalid');
+        // food_name_value = null;
+        // food_price_value = null;
+        // food_description_value = '';
+        // categories = [];
+        // selected_categories.classList.remove('is-invalid');
+
+        // if (data.length > 0) {
+        //     data.forEach(d => {
+        //         const el = document.querySelector('.category-selected-' + d.id);
+        //         const small = el.parentElement;
+        //         if (el && small) {
+        //             selected_categories.removeChild(small);
+        //             const opt = document.createElement('option');
+        //             opt.value = id;
+        //             opt.textContent = name;
+        //             food_categories.appendChild(opt);
+        //         }
+        //         ctgPlaceholder.textContent = 'No category selected';
+        //     });
+        // }
+        // btnEditSubmitCategory.innerHTML = 'Update';
+        // btnEditSubmitCategory.removeAttribute('disabled');
+        // btnDeleteCategory.innerHTML = 'Yes';
+        // btnDeleteCategory.removeAttribute('disabled');
+        // category_edit_name.classList.remove('is-invalid');
+        // category_edit_image.classList.remove('is-invalid');
+        // category_name.classList.remove('is-invalid');
+        // category_image.classList.remove('is-invalid');
+
+        // category_edit_name_value = null;
+        // deleted_index_category = null;
+        // updated_index_category = null;
+    }
 
     function formatRupiah(angka, prefix) {
         let number_string = angka.replace(/[^,\d]/g, '').toString(),

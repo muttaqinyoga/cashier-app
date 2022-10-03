@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use Exception;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Ramsey\Uuid\Uuid;
 use Throwable;
@@ -22,7 +21,7 @@ class CategoryController extends Controller
         try {
             $categories = Category::orderBy('name')->get();
             return response()->json(['status' => 'success', 'data' => $categories], 200);
-        } catch (QueryException $e) {
+        } catch (Exception $e) {
             return response()->json(['status' => 'failed', 'message' => 'Something Went Wrong in the server'], 500);
         }
     }

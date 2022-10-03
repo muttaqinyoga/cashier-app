@@ -32,4 +32,5 @@ Route::group(['middleware' => 'auth'], function () {
     Route::delete('/admin/categories/delete', [CategoryController::class, 'delete']);
     Route::get('/admin/foods', [FoodController::class, 'index']);
     Route::get('/admin/foods/get', [FoodController::class, 'getListFood']);
+    Route::post('/admin/foods/save', [FoodController::class, 'save']);
 });
