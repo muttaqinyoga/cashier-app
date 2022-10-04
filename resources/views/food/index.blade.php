@@ -59,6 +59,35 @@
         </div>
     </div>
 </div>
+<!-- Delete Food Modal -->
+<div class="modal fade text-left" id="deleteFoodModal" tabindex="-1" aria-labelledby="deleteFoodModal" role="dialog">
+    <div class="modal-dialog modal-dialog-top modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger">
+                <h4 class="modal-title text-light">Delete Food</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+
+                </button>
+            </div>
+            <form method="post" id="deleteFoodForm">
+                @csrf
+                @method('DELETE')
+                <input type="hidden" name="food_delete_id" id="food_delete_id">
+                <div class="modal-body">
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-danger ml-1" id="btnDeleteFood">
+                        Yes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 <div class="modal fade text-left" id="addFoodModal" tabindex="-1" aria-labelledby="addFoodModal" role="dialog">
     <div class="modal-dialog modal-dialog-top modal-dialog-scrollable" role="document">
         <div class="modal-content">
@@ -196,7 +225,7 @@
                     render: function(data, cell, row) {
                         return `
                             <button type="button" class="btn btn-warning btn-sm edit" data-bs-toggle="modal" data-bs-target="#editCategoryModal" data-index="${row.dataIndex}" onclick="showEdit(${row.dataIndex})" >Edit</button>
-                            <button type="button" class="btn btn-danger btn-sm delete" data-bs-toggle="modal" data-bs-target="#deleteCategoryModal" data-index="${row.dataIndex}" onclick="showDeleteConfirm(${row.dataIndex})" >Delete</button>
+                            <button type="button" class="btn btn-danger btn-sm delete" data-bs-toggle="modal" data-bs-target="#deleteFoodModal" data-index="${row.dataIndex}" onclick="showDeleteConfirm(${row.dataIndex})" >Delete</button>
                             `;
                     }
                 },
@@ -564,87 +593,85 @@
     /* ------- End Update Categories ------- */
     /* ------- Delete Categories ------- */
     // Init var dan DOM
-    // let deleted_index_category = null;
-    // const textDeleteCategory = document.querySelector("#deleteCategoryForm > .modal-body");
-    // const deleteCategoryModal = new bootstrap.Modal('#deleteCategoryModal');
-    // const btnDeleteCategory = document.querySelector('#btnDeleteCategory');
-    // const deleteCategoryForm = document.querySelector('#deleteCategoryForm');
-    // const category_delete_id = document.getElementsByName('category_delete_id')[0];
-    // // END
-    // function showDeleteConfirm(dataIndex) {
-    //     let deleteBtn = document.querySelectorAll('.delete');
-    //     let valid = false;
-    //     deleteBtn.forEach((el, i) => {
-    //         if (el.getAttribute("data-index") == dataIndex) {
-    //             const foodCategoryName = FoodDataTables.activeRows[dataIndex].firstElementChild.textContent;
-    //             textDeleteCategory.innerHTML = `<p> Do you want to delete <strong>${foodCategoryName}</strong> from Food Category List ? </p>`;
-    //             const category_id = FoodDataTables.data[dataIndex].firstElementChild.textContent;
-    //             category_delete_id.value = category_id;
-    //             valid = true;
-    //             deleted_index_category = dataIndex;
-    //         }
-    //     });
-    //     if (!valid) {
-    //         window.location.href = window.location.href;
-    //     }
-    // }
+    let deleted_index_food = null;
+    const textDeleteFood = document.querySelector("#deleteFoodForm > .modal-body");
+    const deleteFoodModal = new bootstrap.Modal('#deleteFoodModal');
+    const btnDeleteFood = document.querySelector('#btnDeleteFood');
+    const deleteFoodForm = document.querySelector('#deleteFoodForm');
+    const food_delete_id = document.getElementsByName('food_delete_id')[0];
+    // END
+    function showDeleteConfirm(dataIndex) {
+        let deleteBtn = document.querySelectorAll('.delete');
+        let valid = false;
+        deleteBtn.forEach((el, i) => {
+            if (el.getAttribute("data-index") == dataIndex) {
+                const foodName = FoodDataTables.activeRows[dataIndex].firstElementChild.textContent;
+                textDeleteFood.innerHTML = `<p> Do you want to delete <strong>${foodName}</strong> from Food List ? </p>`;
+                const food_id = FoodDataTables.data[dataIndex].firstElementChild.textContent;
+                food_delete_id.value = food_id;
+                valid = true;
+                deleted_index_food = dataIndex;
+            }
+        });
+        if (!valid) {
+            window.location.href = window.location.href;
+        }
+    }
     // Submit form
-    // deleteCategoryForm.addEventListener("submit", function(e) {
-    //     e.preventDefault();
-    //     if (category_delete_id.value == '' || category_delete_id.value == null) {
-    //         window.location.href = window.location.href;
-    //     } else {
-    //         if (deleted_index_category == 0) {
-    //             fetchDelete();
-    //         } else if (deleted_index_category == null || deleted_index_category == '') {
-    //             resetAction();
-    //             deleteCategoryModal.hide();
-    //             window.location.href = window.location.href;
-    //         } else {
-    //             fetchDelete();
-    //         }
+    deleteFoodForm.addEventListener("submit", function(e) {
+        e.preventDefault();
+        if (food_delete_id.value == '' || food_delete_id.value == null) {
+            window.location.href = window.location.href;
+        } else {
+            if (deleted_index_food == 0) {
+                fetchDelete();
+            } else if (deleted_index_food == null || deleted_index_food == '') {
+                window.location.href = window.location.href;
+            } else {
+                fetchDelete();
+            }
 
-    //     }
-    // });
+        }
+    });
 
-    // function fetchDelete() {
-    //     const payloadDeleteCategory = {
-    //         _token: document.getElementsByName("_token")[0].getAttribute("value"),
-    //         _method: document.getElementsByName("_method")[0].getAttribute("value"),
-    //         category_delete_id: document.getElementsByName("category_delete_id")[0].getAttribute("value")
-    //     }
-    //     btnDeleteCategory.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...`;
-    //     btnDeleteCategory.setAttribute('disabled', 'disabled');
+    function fetchDelete() {
+        const payloadDeleteFood = {
+            _token: document.getElementsByName("_token")[0].getAttribute("value"),
+            _method: document.getElementsByName("_method")[0].getAttribute("value"),
+            food_delete_id: document.getElementsByName("food_delete_id")[0].getAttribute("value")
+        }
+        btnDeleteFood.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...`;
+        btnDeleteFood.setAttribute('disabled', 'disabled');
 
-    //     fetch("{{ url('admin/categories/delete') }}", {
-    //             method: "DELETE",
-    //             headers: {
-    //                 accept: 'application/json',
-    //                 'Content-type': 'application/json; charset=UTF-8',
-    //                 'X-CSRF-TOKEN': document.getElementsByName("csrf-token")[0].getAttribute("content")
-    //             },
-    //             credentials: "same-origin",
-    //             body: JSON.stringify(payloadDeleteCategory)
-    //         })
-    //         .then(response => response.json())
-    //         .then(res => {
-    //             if (res.status === 'failed') {
+        fetch("{{ url('admin/food/delete') }}", {
+                method: "DELETE",
+                headers: {
+                    accept: 'application/json',
+                    'Content-type': 'application/json; charset=UTF-8',
+                    'X-CSRF-TOKEN': document.getElementsByName("csrf-token")[0].getAttribute("content")
+                },
+                credentials: "same-origin",
+                body: JSON.stringify(payloadDeleteFood)
+            })
+            .then(response => response.json())
+            .then(res => {
+                if (res.status === 'failed') {
 
-    //                 deleteCategoryModal.hide();
-    //                 resetAction();
-    //                 generateMessage(res.status, res.message);
-    //             } else if (res.status === 'success') {
+                    deleteFoodModal.hide();
+                    resetAction();
+                    generateMessage(res.status, res.message);
+                } else if (res.status === 'success') {
 
-    //                 deleteCategoryModal.hide();
-    //                 Foods.data.splice(deleted_index_category, 1);
-    //                 FoodDataTables.destroy();
-    //                 initFoodTable();
-    //                 resetAction();
-    //                 generateMessage(res.status, res.message);
-    //             }
-    //         })
-    //         .catch(err => console.error);
-    // }
+                    deleteFoodModal.hide();
+                    Foods.data.splice(deleted_index_food, 1);
+                    FoodDataTables.destroy();
+                    initFoodTable();
+                    resetAction();
+                    generateMessage(res.status, res.message);
+                }
+            })
+            .catch(err => console.error);
+    }
     /* ------- End Delete Categories ------- */
 
     function resetAction(data = []) {
@@ -680,20 +707,25 @@
         food_description_value = '';
         categories.length = 0;
 
-        // deleteCategoryForm.reset();
+        // reset after delete
+        btnDeleteFood.innerHTML = 'Yes';
+        btnDeleteFood.removeAttribute('disabled');
+        deleted_index_food = null;
+        deleteFoodForm.reset();
+
+
         // editCategoryForm.reset();
 
         // btnEditSubmitCategory.innerHTML = 'Update';
         // btnEditSubmitCategory.removeAttribute('disabled');
-        // btnDeleteCategory.innerHTML = 'Yes';
-        // btnDeleteCategory.removeAttribute('disabled');
+
         // category_edit_name.classList.remove('is-invalid');
         // category_edit_image.classList.remove('is-invalid');
         // category_name.classList.remove('is-invalid');
         // category_image.classList.remove('is-invalid');
 
         // category_edit_name_value = null;
-        // deleted_index_category = null;
+
         // updated_index_category = null;
     }
 

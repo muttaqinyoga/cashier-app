@@ -89,4 +89,22 @@ class FoodController extends Controller
             return response()->json(['status' => 'failed', 'message' => $e->getMessage()], 500);
         }
     }
+
+    public function delete(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $food = Food::findOrFail($request->food_delete_id);
+            $food->categories()->detach();
+            $food->delete();
+            DB::commit();
+            return response()->json(['status' => 'success', 'message' => "$food->name has been deleted"]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'failed', 'message' => 'Could not delete requested data'], 400);
+        } catch (Exception $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'failed', 'message' => $e->getMessage()], 500);
+        }
+    }
 }
