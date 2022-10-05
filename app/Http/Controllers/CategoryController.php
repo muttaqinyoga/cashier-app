@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use Exception;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Ramsey\Uuid\Uuid;
 use Throwable;
