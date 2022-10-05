@@ -88,6 +88,59 @@
         </div>
     </div>
 </div>
+<!-- Detail Food Modal -->
+<div class="modal fade text-left" id="detailFoodModal" tabindex="-1" aria-labelledby="detailFoodModal" role="dialog">
+    <div class="modal-dialog modal-dialog-top modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info">
+                <h4 class="modal-title text-light">Food Detail</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Name</label>
+                    <div type="text" class="form-control" id="detail_food_name">
+
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <div type="text" class="form-control" id="detail_food_categories">
+
+                    </div>
+                </div>
+                <div class="form-group mt-2">
+                    <label>Sell Price</label>
+                    <div type="text" class="form-control" id="detail_food_price">
+
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Status Stock</label>
+                    <p id="detail_food_status">
+
+                    </p>
+                </div>
+                <div class="form-group">
+                    <label>Image</label>
+                    <img src="" class="img-fluid d-block" alt="food_images" width="100" id="detail_food_image">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea class="form-control" readonly disabled name="detail_food_description" id="detail_food_description" rows="3"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add Food Modal -->
 <div class="modal fade text-left" id="addFoodModal" tabindex="-1" aria-labelledby="addFoodModal" role="dialog">
     <div class="modal-dialog modal-dialog-top modal-dialog-scrollable" role="document">
         <div class="modal-content">
@@ -134,9 +187,6 @@
                     <div class="form-group">
                         <label>Description</label>
                         <textarea class="form-control" name="food_description" id="food_description" rows="3"></textarea>
-                        <div class="invalid-feedback" id="food_description_feedback">
-
-                        </div>
                     </div>
                     <div class="form-group">
                         <label>Image</label>
@@ -151,7 +201,7 @@
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                             Cancel
                         </button>
-                        <button type="submit" class="btn btn-success ml-1" id="btnSubmitFood">
+                        <button type="submit" class="btn btn-primary ml-1" id="btnSubmitFood">
                             Save
                         </button>
                     </div>
@@ -224,6 +274,7 @@
                     sortable: false,
                     render: function(data, cell, row) {
                         return `
+                            <button type="button" class="btn btn-info btn-sm detail" data-bs-toggle="modal" data-bs-target="#detailFoodModal" data-index="${row.dataIndex}" onclick="showDetail(${row.dataIndex})" >Detail</button>
                             <button type="button" class="btn btn-warning btn-sm edit" data-bs-toggle="modal" data-bs-target="#editCategoryModal" data-index="${row.dataIndex}" onclick="showEdit(${row.dataIndex})" >Edit</button>
                             <button type="button" class="btn btn-danger btn-sm delete" data-bs-toggle="modal" data-bs-target="#deleteFoodModal" data-index="${row.dataIndex}" onclick="showDeleteConfirm(${row.dataIndex})" >Delete</button>
                             `;
@@ -352,7 +403,27 @@
     });
 
     /* ------- End Get Categories ------- */
+    /* ------- Get Food Detail ------- */
+    function showDetail(dataIndex) {
+        let detailBtn = document.querySelectorAll('.detail');
+        let valid = false;
+        detailBtn.forEach((el, i) => {
+            if (el.getAttribute("data-index") == dataIndex) {
+                document.querySelector('#detail_food_name').textContent = FoodDataTables.data[dataIndex].childNodes[1].data;
+                document.querySelector('#detail_food_categories').textContent = FoodDataTables.data[dataIndex].childNodes[2].data;
+                document.querySelector('#detail_food_price').textContent = formatRupiah(FoodDataTables.data[dataIndex].childNodes[3].data, 'Rp');
+                document.querySelector('#detail_food_status').innerHTML = `${ FoodDataTables.data[dataIndex].childNodes[4].data == 'Tersedia' ? '<span class="badge rounded-pill bg-primary">'+ FoodDataTables.data[dataIndex].childNodes[4].data +'</span>' : '<span class="badge rounded-pill bg-danger">'+ FoodDataTables.data[dataIndex].childNodes[4].data +'</span>' }`;
+                document.querySelector('#detail_food_image').setAttribute('src', `{{ url('images/foods') }}/${FoodDataTables.data[dataIndex].childNodes[6].data}`);
+                document.querySelector('#detail_food_description').textContent = FoodDataTables.data[dataIndex].childNodes[7].data;
+                valid = true;
+            }
 
+        });
+        if (!valid) {
+            window.location.href = window.location.href;
+        }
+    }
+    /* ------- End Get Food ------- */
     /* ------- Save Categories ------- */
     // Initialize Var and DOM
     let food_name_value = null;

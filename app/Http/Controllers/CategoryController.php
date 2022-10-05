@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use Exception;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Ramsey\Uuid\Uuid;
 use Throwable;
@@ -104,6 +105,8 @@ class CategoryController extends Controller
             return response()->json(['status' => 'success', 'message' => "$category->name has been deleted"]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['status' => 'failed', 'message' => 'Could not delete requested data'], 400);
+        } catch (QueryException $e) {
+            return response()->json(['status' => 'failed', 'message' => 'Could not delete this category cause it have references with another data'], 500);
         }
     }
 }
