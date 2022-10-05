@@ -140,6 +140,8 @@
         </div>
     </div>
 </div>
+<!-- Edit Food Modal -->
+
 <!-- Add Food Modal -->
 <div class="modal fade text-left" id="addFoodModal" tabindex="-1" aria-labelledby="addFoodModal" role="dialog">
     <div class="modal-dialog modal-dialog-top modal-dialog-scrollable" role="document">

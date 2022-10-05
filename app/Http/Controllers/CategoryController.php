@@ -106,7 +106,7 @@ class CategoryController extends Controller
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['status' => 'failed', 'message' => 'Could not delete requested data'], 400);
         } catch (QueryException $e) {
-            return response()->json(['status' => 'failed', 'message' => 'Could not delete this category cause it have references with another data'], 500);
+            return response()->json(['status' => 'failed', 'message' => 'Could not delete because this category had references to other data'], 500);
         }
     }
 }
