@@ -140,6 +140,76 @@
         </div>
     </div>
 </div>
+<!-- Edit Food Modal -->
+<div class="modal fade text-left" id="editFoodModal" tabindex="-1" aria-labelledby="editFoodModal" role="dialog">
+    <div class="modal-dialog modal-dialog-top modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h4 class="modal-title text-light">Edit Food</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+
+                </button>
+            </div>
+            <form method="post" id="editFoodForm">
+                @csrf
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" class="form-control" name="edit_food_name" id="edit_food_name">
+                        <div class="invalid-feedback" id="edit_food_name_feedback">
+
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select class="form-select" id="edit_food_categories">
+                            <option selected>-Choose category--</option>
+                            @foreach($categories as $c)
+                            <option value="{{ $c->id }}">{{ $c->name }}</option>
+                            @endforeach
+                        </select>
+                        <div class="invalid-feedback" id="edit_food_categories_feedback">
+
+                        </div>
+                    </div>
+                    <div class="form-group mt-2">
+                        <div type="text" class="form-control" id="edit_selected_categories">
+                            <small id="editCtgPlaceholder">No category selected</small>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Sell Price</label>
+                        <input type="number" min="0" placeholder="ex. 10000" class="form-control" name="edit_food_price" id="edit_food_price">
+                        <div class="invalid-feedback" id="edit_food_price_feedback">
+
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea class="form-control" name="edit_food_description" id="edit_food_description" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Image</label>
+                        <div class="form-group">
+                            <input class="form-control" type="file" name="edit_food_image" id="edit_food_image">
+                            <div class="invalid-feedback" id="edit_food_image_feedback">
+
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-warning ml-1" id="btnSubmitFood">
+                            Save
+                        </button>
+                    </div>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
 <!-- Add Food Modal -->
 <div class="modal fade text-left" id="addFoodModal" tabindex="-1" aria-labelledby="addFoodModal" role="dialog">
     <div class="modal-dialog modal-dialog-top modal-dialog-scrollable" role="document">
@@ -223,10 +293,10 @@
         const toastBody = document.querySelector(".toast-body");
         if (status === 'success' || status === 'created') {
             toastAlert.classList.remove("bg-danger");
-            toastAlert.classList.add("bg-success");
+            toastAlert.classList.add("bg-info");
             toastBody.textContent = message;
         } else {
-            toastAlert.classList.remove("bg-success");
+            toastAlert.classList.remove("bg-info");
             toastAlert.classList.add("bg-danger");
             toastBody.textContent = message;
             console.log(toastBody.textContent)
@@ -275,7 +345,7 @@
                     render: function(data, cell, row) {
                         return `
                             <button type="button" class="btn btn-info btn-sm detail" data-bs-toggle="modal" data-bs-target="#detailFoodModal" data-index="${row.dataIndex}" onclick="showDetail(${row.dataIndex})" >Detail</button>
-                            <button type="button" class="btn btn-warning btn-sm edit" data-bs-toggle="modal" data-bs-target="#editCategoryModal" data-index="${row.dataIndex}" onclick="showEdit(${row.dataIndex})" >Edit</button>
+                            <button type="button" class="btn btn-warning btn-sm edit" data-bs-toggle="modal" data-bs-target="#editFoodModal" data-index="${row.dataIndex}" onclick="showEdit(${row.dataIndex})" >Edit</button>
                             <button type="button" class="btn btn-danger btn-sm delete" data-bs-toggle="modal" data-bs-target="#deleteFoodModal" data-index="${row.dataIndex}" onclick="showDeleteConfirm(${row.dataIndex})" >Delete</button>
                             `;
                     }

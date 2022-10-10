@@ -192,10 +192,10 @@
         const toastBody = document.querySelector(".toast-body");
         if (status === 'success' || status === 'created') {
             toastAlert.classList.remove("bg-danger");
-            toastAlert.classList.add("bg-success");
+            toastAlert.classList.add("bg-info");
             toastBody.textContent = message;
         } else {
-            toastAlert.classList.remove("bg-success");
+            toastAlert.classList.remove("bg-info");
             toastAlert.classList.add("bg-danger");
             toastBody.textContent = message;
         }
@@ -542,8 +542,6 @@
             if (deleted_index_category == 0) {
                 fetchDelete();
             } else if (deleted_index_category == null || deleted_index_category == '') {
-                resetAction();
-                deleteCategoryModal.hide();
                 window.location.href = window.location.href;
             } else {
                 fetchDelete();
