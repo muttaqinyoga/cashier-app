@@ -6,6 +6,7 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Models\Food;
 use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Ramsey\Uuid\Uuid;
@@ -44,10 +45,10 @@ class FoodController extends Controller
         }
         // validate categories
         $reqCategories = explode(",", $request->food_categories);
-        $validCategories = collect();
+        $validCategories = null;
         try {
-            $validCategories->add(DB::table('categories')->select('id', 'name')->whereIn('id', $reqCategories)->get());
-            if ($validCategories->first()->count() != count($reqCategories)) {
+            $validCategories->DB::table('categories')->select('id', 'name')->whereIn('id', $reqCategories)->get();
+            if ($validCategories->count() != count($reqCategories)) {
                 return response()->json(['status' => 'failed', 'errors' => ['food_categories' => ['The food categories does not exists']]], 400);
             }
         } catch (QueryException $e) {
@@ -80,10 +81,77 @@ class FoodController extends Controller
                 'status_stock' => $newFood->status_stock,
                 'description' => $newFood->description,
                 'created_at' => $newFood->created_at,
-                'categories' => $validCategories->first()
+                'categories' => $validCategories
             ];
             DB::commit();
             return response()->json(['status' => 'created', 'message' => 'New food added', 'data' => $payload], 201);
+        } catch (Throwable $e) {
+            DB::rollBack();
+            return response()->json(['status' => 'failed', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function update(Request $request)
+    {
+        $food = null;
+        try {
+            $food = Food::find($request->edit_food_id);
+            $validation = \Validator::make($request->all(), [
+                'edit_food_name' => 'required|string|min:3|max:50|unique:foods,name,' . $request->edit_food_id,
+                'edit_food_image' => 'image|mimes:jpeg,png,jpg|max:100',
+                'edit_food_price' => 'required|numeric|min:0',
+                'edit_food_description' => 'max:100',
+                'edit_food_categories' => 'required',
+                'edit_food_status' => 'required|in:Tersedia,Tidak Tersedia'
+            ]);
+            if ($validation->fails()) {
+                return response()->json(['status' => 'failed', 'errors' => $validation->errors()], 400);
+            }
+        } catch (Exception $e) {
+            return response()->json(['status' => 'failed', 'message' => 'Could update requested data'], 400);
+        }
+
+        // validate categories
+        $reqCategories = explode(",", $request->edit_food_categories);
+        $validCategories = null;
+        try {
+            $validCategories = DB::table('categories')->select('id', 'name')->whereIn('id', $reqCategories)->get();
+            if ($validCategories->count() != count($reqCategories)) {
+                return response()->json(['status' => 'failed', 'errors' => ['edit_food_categories' => ['The food categories does not exists']]], 400);
+            }
+        } catch (QueryException $e) {
+            return response()->json(['status' => 'failed', 'errors' => ['edit_food_categories' => ['Could not get categories']]], 400);
+        }
+        // Update
+        DB::beginTransaction();
+
+        try {
+            $food->name = $request->edit_food_name;
+            $food->price = $request->edit_food_price;
+            $food->description = $request->edit_food_description;
+            if ($request->file('edit_food_image')) {
+                if ($food->image != self::DEFAULT_IMAGE_FOOD) {
+                    unlink(public_path('/images/foods/' . $category->image));
+                }
+                $imageName = time() . $food->name . '.' . $request->file('edit_food_image')->getClientOriginalExtension();
+                $request->file('edit_food_image')->move(public_path('/images/foods'), $imageName);
+                $food->image = $imageName;
+            }
+            $food->status_stock = $request->edit_food_status;
+            $food->update();
+            $food->categories()->sync($reqCategories);
+            $payload = [
+                'id' => $food->id,
+                'name' => $food->name,
+                'price' => $food->price,
+                'image' => $food->image,
+                'status_stock' => $food->status_stock,
+                'description' => $food->description,
+                'created_at' => $food->updated_at,
+                'categories' => $validCategories
+            ];
+            DB::commit();
+            return response()->json(['status' => 'success', 'message' => 'Food has been updated', 'data' => $payload], 200);
         } catch (Throwable $e) {
             DB::rollBack();
             return response()->json(['status' => 'failed', 'message' => $e->getMessage()], 500);

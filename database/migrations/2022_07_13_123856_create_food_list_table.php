@@ -20,7 +20,7 @@ return new class extends Migration
             $table->double('price');
             $table->string('image');
             $table->text('description')->nullable();
-            $table->enum('status_stock', ['Tersedia', 'Tidak tersedia'])->default('Tersedia');
+            $table->enum('status_stock', ['Tersedia', 'Tidak Tersedia'])->default('Tersedia');
             $table->timestamps();
         });
         DB::statement('ALTER TABLE foods ALTER COLUMN id SET DEFAULT uuid_generate_v4();');

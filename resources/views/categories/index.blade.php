@@ -192,10 +192,10 @@
         const toastBody = document.querySelector(".toast-body");
         if (status === 'success' || status === 'created') {
             toastAlert.classList.remove("bg-danger");
-            toastAlert.classList.add("bg-info");
+            toastAlert.classList.add("bg-success");
             toastBody.textContent = message;
         } else {
-            toastAlert.classList.remove("bg-info");
+            toastAlert.classList.remove("bg-success");
             toastAlert.classList.add("bg-danger");
             toastBody.textContent = message;
         }
