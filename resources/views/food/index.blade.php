@@ -434,32 +434,34 @@
         });
 
         function removeSelected(id, name, act = 'add') {
-            const el = document.querySelector('.category-selected-' + id);
-            const small = el.parentElement;
-            if (el && small) {
-                if (act == 'edit') {
-                    edit_selected_categories.removeChild(small);
-                    const opt = document.createElement('option');
-                    opt.value = id;
-                    opt.textContent = name;
-                    edit_food_categories.appendChild(opt);
-                    if (edit_selected_categories.childElementCount <= 1) {
-                        editCtgPlaceholder.textContent = 'No category selected';
-                        edit_selected_categories.classList.add('is-invalid');
-                    }
-                    return categories.splice(categories.findIndex(i => i == id), 1);
-                } else if (act == 'add') {
-                    selected_categories.removeChild(small);
-                    const opt = document.createElement('option');
-                    opt.value = id;
-                    opt.textContent = name;
-                    food_categories.appendChild(opt);
-                    if (selected_categories.childElementCount <= 1) {
-                        ctgPlaceholder.textContent = 'No category selected';
-                        selected_categories.classList.add('is-invalid');
-                    }
-                    return categories.splice(categories.findIndex(i => i == id), 1);
+            if (act == 'edit') {
+                console.log(name);
+                const el = document.querySelector('.category-selected-' + id);
+                const small = el.parentElement;
+                edit_selected_categories.removeChild(small);
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.textContent = name;
+                edit_food_categories.appendChild(opt);
+                if (edit_selected_categories.childElementCount <= 1) {
+                    editCtgPlaceholder.textContent = 'No category selected';
+                    edit_selected_categories.classList.add('is-invalid');
                 }
+                return categories.splice(categories.findIndex(i => i == id), 1);
+            } else if (act == 'add') {
+                console.log(name);
+                const el = document.querySelector('.category-selected-' + id);
+                const small = el.parentElement;
+                selected_categories.removeChild(small);
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.textContent = name;
+                food_categories.appendChild(opt);
+                if (selected_categories.childElementCount <= 1) {
+                    ctgPlaceholder.textContent = 'No category selected';
+                    selected_categories.classList.add('is-invalid');
+                }
+                return categories.splice(categories.findIndex(i => i == id), 1);
             }
             window.location.href = window.location.href;
         }
@@ -740,7 +742,7 @@
             }
             edit_selected_categories.classList.remove('is-invalid');
             const elem = document.createElement('small');
-            elem.innerHTML = ` ${selected.textContent} <span class="badge rounded-pill bg-danger category-selected-${selected.value}" onclick="removeSelected('${selected.value}', '${selected.textContent}')" style="cursor: pointer;" > x </span>`;
+            elem.innerHTML = ` ${selected.textContent} <span class="badge rounded-pill bg-danger category-selected-${selected.value}" onclick="removeSelected('${selected.value}', '${selected.textContent}', 'edit')" style="cursor: pointer;" > x </span>`;
             edit_selected_categories.appendChild(elem);
             categories.push(selected.value);
             this.remove(this.selectedIndex);

@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\FoodController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -35,4 +36,6 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/admin/foods/save', [FoodController::class, 'save']);
     Route::post('/admin/foods/update', [FoodController::class, 'update']);
     Route::delete('/admin/food/delete', [FoodController::class, 'delete']);
+    Route::get('/admin/orders', [OrderController::class, 'index']);
+    Route::get('/admin/orders/get', [OrderController::class, 'getListOrder']);
 });

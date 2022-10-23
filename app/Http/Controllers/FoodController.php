@@ -47,7 +47,7 @@ class FoodController extends Controller
         $reqCategories = explode(",", $request->food_categories);
         $validCategories = null;
         try {
-            $validCategories->DB::table('categories')->select('id', 'name')->whereIn('id', $reqCategories)->get();
+            $validCategories = DB::table('categories')->select('id', 'name')->whereIn('id', $reqCategories)->get();
             if ($validCategories->count() != count($reqCategories)) {
                 return response()->json(['status' => 'failed', 'errors' => ['food_categories' => ['The food categories does not exists']]], 400);
             }
